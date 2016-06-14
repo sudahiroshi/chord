@@ -143,10 +143,15 @@
             left: 30px;
         }
     </style>
-    <script src="chord.jsx.js"></script>
+    <script src="nylon.js"></script>
+    <script src="vcanvas.js"></script>
+    <script src="chord.js"></script>
     <script>
         window.addEventListener("load", function(e) {
-            JSX.require("chord.jsx").chord.main$S("graph1");
+          var elm1 = document.getElementById('graph1');
+          var vc1 = new VCanvas( elm1 );
+          var mychord = new chord( vc1 );
+          //  JSX.require("chord.jsx").chord.main$S("graph1");
             //		JSX.require("chord.jsx").gui.main$SSSS( "start", "stop", "b03", "b05" );
         });
     </script>
