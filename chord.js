@@ -1,121 +1,34 @@
 class SoundGenerator {
   constructor() {
-    this.data = new Array();
-    this.offset = 0;
-    this.sampleRate = 0;
-    this.bufferSize = 0;
-    this.stream_length = 4096;
-    this.samplerate = 48000;
-    this.channle = 1;
+    this.context = new AudioContext();
+    this.osc = null;
+    this._playing = false;
   }
 
-  // number freq, number rate, number[] member
-  // return void
-	create( freq, rate, member ) {
-		this.sampleRate = rate;
-		this.offset = 0;
-		this.bufferSize = 4096 * 24;
-		for( var i=0; i<member.length; i++ ) {
-			this.data[i] = 0;
-		}
-		for( var j in member ) {
-			var k = 2.0 * Math.PI * freq * j / this.sampleRate;
-			for( var i=0; i<this.data.length; i++ ){
-				this.data[i] += member[j] * Math.sin( k * i );
-			}
-		}
-	}
-  // return number[]
-	next() {
-		var stream = [];
-		for( var i=0; i<this.stream_length; i++ ) {
-			stream[i] = this.data[ i + this.offset ];
-		}
-		this.offset += this.stream_length;
-		return stream;
-	}
-	getSize() {
-		return this.bufferSize;
-	}
-	rewind() {
-		this.offset = 0;
-	}
-	clear() {
-		for( var i=0; i<this.bufferSize; i++ ) {
-			this.data[i] = 0;
-		}
-	}
-}
+  start( freq, gain ) {
+    if( this._playing == false ) {
+      var osc = this.context.createOscillator();
+      var gn = this.context.createGain();
+      gn.gain.value = gain * 0.5;
 
-class WebAudio {
-  constructor() {
-  	this.context = new AudioContext();
-    this.sampleRate = this.context.sampleRate;
-  	this.buf = null;
-  //	var dest: AudioDestinationNode;
-  	this.isPlaying = false;
-  	this.sampleRate = 44100;
-  	this.src = null;
-  }
-  // int number, int[] data
-  // return void
-	play( freq, data ) {
-		//this.context.sampleRate = 48000;
-		this.buf = this.context.createBuffer(1, this.context.sampleRate, this.context.sampleRate);
-		var sound_data = this.buf.getChannelData( 0 );
-		for( var i=0; i<data.length; i++ ){
-			sound_data[i] = data[i];
-		}
-		var src = this.context.createBufferSource();
-		src.buffer = this.buf;
-		src.connect( this.context.destination );
-//		src.gain.value = 1;
-		src.start( 0 );
-	}
-  waves(freq, member, sec ) {
-    // 基本周波数と，含まれる周波数スペクトラムを受け取り，波形を合成するメソッド
-    // freqは基本周波数
-    // memberは周波数をkey，振幅をvalueとするハッシュテーブル
-    // secは秒数
-    data = new Array(samplerate*sec);
-    for( var i=0; i<data.length; i++ )	data[i] = 0;
-    for( var j in member ) {
-      var k = 2 * Math.PI * freq * j / samplerate;
-      for( var i=0; i<data.length; i++ ){
-        data[i] += member[j] * Math.sin( k * i );
-      }
+      osc.frequency.value = freq;
+      osc.connect( gn );
+      gn.connect( this.context.destination );
+      this.osc = osc;
+      osc.start();
+      this._playing = true;
     }
-  };
-/*
-	function play( freq: number, second: number, member: Array.<Map.<number>> ) : void {
-		this.buf = this.context.createBuffer(1, this.context.sampleRate * second, this.context.sampleRate);
-		var sound_data = this.buf.getChannelData( 0 );
-		for( var i=0; i<this.context.sampleRate * second; i++ ){
-			sound_data[i] = 0;
-		}
-		member.forEach( function(j) {
-			var k = 2.0 * Math.PI * freq * j["key"] / this.context.sampleRate;
-			for( var i=0; i<sound_data.length; i++ ){
-				sound_data[i] += j["val"] * Math.sin( k * i ) / 3.0;
-			}
-		});
-		var src = this.context.createBufferSource();
-		this.src = src;
-		src.buffer = this.buf;
-		src.connect( this.context.destination );
-		//src.gain.value = 1;
-		log src.loop;
-		src.loop = true;
-		src.noteOn( 0 );
-		this.isPlaying = true;
-	}*/
+  }
 
-	stop() {
-//		this.node.disconnect();
-		if( this.isPlaying == true )	this.src.stop( 0 );
-		this.isPlaying = false;
-	}
+  stop() {
+    if( this._playing == true ) {
+      this.osc.stop();
+      this._playing = false;
+    }
+  }
+
 }
+
 class chord {
 	/*static function main( canvas1Id: string ) : void {
 		var elm1 = dom.id(canvas1Id) as HTMLCanvasElement;
@@ -124,9 +37,16 @@ class chord {
 	}*/
 
   constructor( vc1, vc2 ) {
+    this.sg0 = new SoundGenerator();
+    this.sg1 = new SoundGenerator();
+    this.sg2 = new SoundGenerator();
+    this._palying = true;
+
     vc1.scale( 350, -30, 630, 40 );
-    vc2.scale( 350, -10, 630, 50 );
+    vc2.scale( 350, -30, 630, 70 );
     var nl = new nylon();
+
+    // Upper Graph
     nl.on( "chord", ( key, params ) => {
       vc1.cls();
       vc1.forecolor( 200, 0, 0 );
@@ -137,57 +57,62 @@ class chord {
       vc1.circle( params["freq"] * params["waves"][2]["ratio"], 0, 5 );
       vc1.stroke();
     });
+
+    // Lower Graph
     nl.on( "chord", ( key, params ) => {
       vc2.cls();
       vc2.forecolor( 200, 0, 0 );
       vc2.drawWidth( 2 );
       vc2.beginPath();
-      vc2.circle( params["freq"], 0, 5 );
-      vc2.circle( params["freq"] * params["waves"][1]["ratio"], 0, 5 );
-      vc2.circle( params["freq"] * params["waves"][2]["ratio"], 0, 5 );
+      var f0 = params["freq"];
+      var f1 = params["freq"] * params["waves"][1]["ratio"];
+      var f2 = params["freq"] * params["waves"][2]["ratio"];
+      vc2.circle( f0, 0, 5 );
+      vc2.circle( f1, 0, 5 );
+      vc2.circle( f2, 0, 5 );
+      vc2.stroke();
+
+      vc2.setFont( "20px sans-serif" );
+      vc2.forecolor( 0, 0, 0 );
+      vc2.beginPath();
+      vc2.print( f0-20, -15, Math.floor(f0) + "Hz" );
+      vc2.print( f1-20, -15, Math.floor(f1) + "Hz" );
+      vc2.print( f2-20, -15, Math.floor(f2) + "Hz" );
       vc2.stroke();
     });
+
+    // sound on
+    nl.on( "chord", ( key, params ) => {
+      if( this._playing == true ) {
+        this.sg0.stop();
+        this.sg1.stop();
+        this.sg2.stop();
+      }
+      var f0 = params["freq"];
+      var f1 = params["freq"] * params["waves"][1]["ratio"];
+      var f2 = params["freq"] * params["waves"][2]["ratio"];
+
+      var v0 = params["waves"][0]["amp"];
+      var v1 = params["waves"][1]["amp"];
+      var v2 = params["waves"][2]["amp"];
+
+      this.sg0.start( f0, v0 );
+      this.sg1.start( f1, v1 );
+      this.sg2.start( f2, v2 );
+
+      this._playing = true;
+    });
+
+    // sound off
+    nl.on( "stop", ( key, params ) => {
+      if( this._playing == true ) {
+        this.sg0.stop();
+        this.sg1.stop();
+        this.sg2.stop();
+      }
+      this._playing = false;
+    });
   }
-  // int freq, map member
-	sound( freq, member ) {
-		this.wa.stop();
-		var f0 = member[0]["key"];
-		var f1 = member[1]["key"];
-		var f2 = member[2]["key"];
-		var vc = this.vc1;
-		vc.beginPath();
-		//vc.cls();
-		vc.fill();
-
-		vc.beginPath();
-		vc.lineWidth( 2 );
-		vc.forecolor( 255, 0, 0 );
-		vc.circle( f0, 0, 5 );
-		vc.stroke();
-
-		vc.beginPath();
-		vc.circle( f1, 0, 5 );
-		vc.stroke();
-
-		vc.beginPath();
-		vc.circle( f2, 0, 5 );
-		vc.stroke();
-
-		vc.forecolor( 0, 0, 0 );
-		vc.setFont( "18px sans-serif" );
-		vc.print( f0 - 0.05, -2.2, ( Math.round( f0 * 440 ) ) + "Hz" );
-		vc.print( f1 - 0.05, -2.2, ( Math.round( f1 * 440 ) ) + "Hz" );
-		vc.print( f2 - 0.05, -2.2, ( Math.round( f2 * 440 ) ) + "Hz" );
-
-		this.wa.play( freq, 5, member );
-
-    var res1 = document.getElementById("result1");
-		res1.innerHTML = Math.abs( Math.round( 440 * ( f1 - member[1]["val"] ) ) ) + "Hz";
-
-    var res2 = document.getElementById("result2");
-		res2.innerHTML = Math.abs( Math.round( 440 * ( f2 - member[2]["val"] ) ) ) + "Hz";
-
-	}
 }
 
 class Graph2 {
@@ -217,14 +142,9 @@ class Graph2 {
   // VCanvas vc
 	constructor( vc ) {
 		this.vc = vc;
-    this.vc.scale( 350, -10, 630, 50 );
+    this.vc.scale( 350, -30, 630, 70 );
 
     this.background();
-
-		var nl = new nylon();
-		nl.on( "stop", function(){
-			this.wa.stop();
-		});
 	}
 }
 
@@ -254,7 +174,6 @@ class Graph1 {
 		this.vc = vc;
 		//this.vc.scale( 0.787, -9.85, 1.44, 16.04 );
     this.vc.scale( 350, -30, 630, 40 );
-		this.wa = new WebAudio();
 
     this.background();
 

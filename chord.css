@@ -117,7 +117,7 @@ body {
   left: 0;
   top: 0;
   width: 760px;
-  height: 140;
+  height: 120px;
 }
 
 #tone {
@@ -125,9 +125,9 @@ body {
   margin: 0;
   padding: 0;
   left: 0;
-  top: 140px;
+  top: 120px;
   width: 760px;
-  height: 140px;
+  height: 160px;
 }
 
 #graph1 {
