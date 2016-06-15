@@ -1,0 +1,177 @@
+body {
+    background-color: #afafaf;
+}
+
+.myCanvas {
+    position: absolute;
+    margin: 0;
+    padding: 0;
+    left: 0;
+    top: 0;
+}
+
+#area1 {
+    position: relative;
+    width: 600px;
+    height: 100px;
+}
+
+#area2 {
+    position: relative;
+    width: 600;
+    height: 200px;
+}
+
+#area3 {
+    position: relative;
+    width: 600px;
+    height: 200px;
+}
+
+#back1 {
+    position: relative;
+    background-color: #e6d8c0;
+    width: 760px;
+    height: 100px;
+    margin-bottom: 10px;
+}
+
+#back2 {
+    position: relative;
+    background-color: #e5f1f3;
+    width: 760px;
+    height: 260px;
+    margin-bottom: 10px;
+}
+
+#back3 {
+    position: relative;
+    background-color: #e9f0d0;
+    width: 760px;
+    height: 300px;
+}
+
+#button_base {
+    position: absolute;
+    left: 10px;
+    width: 600px;
+}
+
+#button_base2 {
+    position: absolute;
+    left: 550px;
+    top: 10px;
+    //        width: 500px;
+}
+
+#upper {
+    position: absolute;
+    left: 130px;
+    top: 10px;
+}
+
+#lower {
+    position: absolute;
+    left: 130px;
+    top: 90px;
+}
+
+#result1 {
+    position: absolute;
+    top: 190px;
+    left: 100px;
+}
+
+#result2 {
+    position: absolute;
+    top: 220px;
+    left: 100px;
+}
+
+#stop {
+    position: absolute;
+    width: 70px;
+    height: 70px;
+}
+
+.sound {
+    width: 60px;
+    height: 60px;
+}
+
+#svg1 {
+    width: 760px;
+}
+
+#svg2 {
+    position: absolute;
+    left: 0px;
+    top: 0px;
+    width: 760px;
+}
+
+#octave {
+  position: absolute;
+  margin: 0;
+  padding: 0;
+  left: 0;
+  top: 0;
+  width: 760px;
+  height: 140;
+}
+
+#tone {
+  position: absolute;
+  margin: 0;
+  padding: 0;
+  left: 0;
+  top: 140px;
+  width: 760px;
+  height: 140px;
+}
+
+#graph1 {
+    position: absolute;
+    margin: 0;
+    padding: 0;
+    left: 0;
+    top: 0;
+}
+#graphback1 {
+    position: absolute;
+    margin: 0;
+    padding: 0;
+    left: 0;
+    top: 0;
+}
+
+#graph2 {
+    position: absolute;
+    margin: 0;
+    padding: 0;
+    left: 0;
+}
+#graphback2 {
+    position: absolute;
+    margin: 0;
+    padding: 0;
+    left: 0;
+}
+
+#text1 {
+    position: absolute;
+    top: 30px;
+}
+
+#text2 {
+    position: absolute;
+    top: 100px;
+    width: 125px;
+}
+
+#text3 {
+    position: absolute;
+    top: 160px;
+    //width: 160px;
+    left: 30px;
+}

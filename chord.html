@@ -4,156 +4,12 @@
 <head>
     <meta charset="UTF-8">
     <title>Chord</title>
-    <style>
-        body {
-            background-color: #afafaf;
-        }
-
-        .myCanvas {
-            position: absolute;
-            margin: 0;
-            padding: 0;
-            left: 0;
-            top: 0;
-        }
-
-        #area1 {
-            position: relative;
-            width: 600px;
-            height: 100px;
-        }
-
-        #area2 {
-            position: relative;
-            width: 600;
-            height: 200px;
-        }
-
-        #area3 {
-            position: relative;
-            width: 600px;
-            height: 200px;
-        }
-
-        #back1 {
-            position: relative;
-            background-color: #e6d8c0;
-            width: 760px;
-            height: 100px;
-            margin-bottom: 10px;
-        }
-
-        #back2 {
-            position: relative;
-            background-color: #e5f1f3;
-            width: 760px;
-            height: 260px;
-            margin-bottom: 10px;
-        }
-
-        #back3 {
-            position: relative;
-            background-color: #e9f0d0;
-            width: 760px;
-            height: 300px;
-        }
-
-        #button_base {
-            position: absolute;
-            left: 10px;
-            width: 600px;
-        }
-
-        #button_base2 {
-            position: absolute;
-            left: 550px;
-            top: 10px;
-            //        width: 500px;
-        }
-
-        #upper {
-            position: absolute;
-            left: 130px;
-            top: 10px;
-        }
-
-        #lower {
-            position: absolute;
-            left: 130px;
-            top: 90px;
-        }
-
-        #result1 {
-            position: absolute;
-            top: 190px;
-            left: 100px;
-        }
-
-        #result2 {
-            position: absolute;
-            top: 220px;
-            left: 100px;
-        }
-
-        #stop {
-            position: absolute;
-            width: 70px;
-            height: 70px;
-        }
-
-        .sound {
-            width: 60px;
-            height: 60px;
-        }
-
-        #svg1 {
-            width: 760px;
-        }
-
-        #svg2 {
-            position: absolute;
-            left: 0px;
-            top: 0px;
-            width: 760px;
-        }
-
-        #graph1 {
-            position: absolute;
-            margin: 0;
-            padding: 0;
-            left: 0;
-            top: 0;
-        }
-
-        #text1 {
-            position: absolute;
-            top: 30px;
-        }
-
-        #text2 {
-            position: absolute;
-            top: 100px;
-            width: 125px;
-        }
-
-        #text3 {
-            position: absolute;
-            top: 160px;
-            //width: 160px;
-            left: 30px;
-        }
-    </style>
+    <link rel="stylesheet" href="chord.css">
     <script src="nylon.js"></script>
     <script src="vcanvas.js"></script>
     <script src="chord.js"></script>
     <script>
-        window.addEventListener("load", function(e) {
-          var elm1 = document.getElementById('graph1');
-          var vc1 = new VCanvas( elm1 );
-          var mychord = new chord( vc1 );
-          //  JSX.require("chord.jsx").chord.main$S("graph1");
-            //		JSX.require("chord.jsx").gui.main$SSSS( "start", "stop", "b03", "b05" );
-        });
+
     </script>
 </head>
 
@@ -191,8 +47,15 @@
             <div id="result2">00 Hz</div>
         </div>
         <div id="back3">
-            <img id="svg2" src="chord2.svg">
-            <canvas id="graph1" width="760" height="280"></canvas>
+            <!-- <img id="svg2" src="chord2.svg"> -->
+            <div id="octave">
+              <canvas id="graphback1" width="760" height="120"></canvas>
+              <canvas id="graph1" width="760" height="120"></canvas>
+            </div>
+            <div id="tone">
+              <canvas id="graphback2" width="760" height="140"></canvas>
+              <canvas id="graph2" width="760" height="140"></canvas>
+            </div>
         </div>
     </div>
 </body>

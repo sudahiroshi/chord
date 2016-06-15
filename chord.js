@@ -54,7 +54,7 @@ class WebAudio {
   	this.buf = null;
   //	var dest: AudioDestinationNode;
   	this.isPlaying = false;
-  	this.sampleRate = 0;
+  	this.sampleRate = 44100;
   	this.src = null;
   }
   // int number, int[] data
@@ -123,6 +123,31 @@ class chord {
 		var mychord = new chord( vc1 );
 	}*/
 
+  constructor( vc1, vc2 ) {
+    vc1.scale( 350, -30, 630, 40 );
+    vc2.scale( 350, -10, 630, 50 );
+    var nl = new nylon();
+    nl.on( "chord", ( key, params ) => {
+      vc1.cls();
+      vc1.forecolor( 200, 0, 0 );
+      vc1.drawWidth( 2 );
+      vc1.beginPath();
+      vc1.circle( params["freq"], 0, 5 );
+      vc1.circle( params["freq"] * params["waves"][1]["ratio"], 0, 5 );
+      vc1.circle( params["freq"] * params["waves"][2]["ratio"], 0, 5 );
+      vc1.stroke();
+    });
+    nl.on( "chord", ( key, params ) => {
+      vc2.cls();
+      vc2.forecolor( 200, 0, 0 );
+      vc2.drawWidth( 2 );
+      vc2.beginPath();
+      vc2.circle( params["freq"], 0, 5 );
+      vc2.circle( params["freq"] * params["waves"][1]["ratio"], 0, 5 );
+      vc2.circle( params["freq"] * params["waves"][2]["ratio"], 0, 5 );
+      vc2.stroke();
+    });
+  }
   // int freq, map member
 	sound( freq, member ) {
 		this.wa.stop();
@@ -131,7 +156,7 @@ class chord {
 		var f2 = member[2]["key"];
 		var vc = this.vc1;
 		vc.beginPath();
-		vc.cls();
+		//vc.cls();
 		vc.fill();
 
 		vc.beginPath();
@@ -150,115 +175,148 @@ class chord {
 
 		vc.forecolor( 0, 0, 0 );
 		vc.setFont( "18px sans-serif" );
-		vc.print( f0 - 0.05, -2.2, ( (f0 * 440) ) + "Hz" );
-		vc.print( f1 - 0.05, -2.2, ( (f1 * 440) ) + "Hz" );
-		vc.print( f2 - 0.05, -2.2, ( (f2 * 440) ) + "Hz" );
+		vc.print( f0 - 0.05, -2.2, ( Math.round( f0 * 440 ) ) + "Hz" );
+		vc.print( f1 - 0.05, -2.2, ( Math.round( f1 * 440 ) ) + "Hz" );
+		vc.print( f2 - 0.05, -2.2, ( Math.round( f2 * 440 ) ) + "Hz" );
 
 		this.wa.play( freq, 5, member );
 
     var res1 = document.getElementById("result1");
-		res1.innerHTML = Math.abs( 440 * ( f1 - member[1]["val"] ) ) + "Hz";
+		res1.innerHTML = Math.abs( Math.round( 440 * ( f1 - member[1]["val"] ) ) ) + "Hz";
 
     var res2 = document.getElementById("result2");
-		res2.innerHTML = Math.abs( 440 * ( f2 - member[2]["val"] ) ) + "Hz";
+		res2.innerHTML = Math.abs( Math.round( 440 * ( f2 - member[2]["val"] ) ) ) + "Hz";
 
 	}
+}
 
-  // VCanvas vc1
+class Graph2 {
+  background() {
+    this.vc.lineWidth( 3 );
+    this.vc.forecolor( 47, 81, 115 );
+    this.vc.beginPath();
+    this.vc.line( 400, 0, 900, 0 );
+    for( var i=440; i<=880; i+=440/12 )
+      this.vc.line( i, -10, i, 10 );
+    this.vc.stroke();
+
+    this.vc.forecolor( 0, 0, 0 );
+    this.vc.setFont( "18px sans-serif" );
+    this.vc.beginPath();
+    var name = { "c":440, "d":513, "e":586, "f":623, "g":697, "a":770, "b":843}
+    for( let tone in name )
+    {
+      this.vc.print( name[tone]-5, 20, tone );
+      console.log( "freq:" + name[tone] + "Hz = " + tone );
+    }
+    this.vc.setFont( "24px sans-serif" );
+    this.vc.print( 580, 35, "12 tone tempeament" );
+    this.vc.stroke();
+  }
+
+  // VCanvas vc
 	constructor( vc ) {
-		this.vc1 = vc;
-		this.vc1.scale( 0.787, -9.85, 1.44, 16.04 );
-		this.wa = new WebAudio();
+		this.vc = vc;
+    this.vc.scale( 350, -10, 630, 50 );
+
+    this.background();
 
 		var nl = new nylon();
 		nl.on( "stop", function(){
 			this.wa.stop();
 		});
-
-    var snd = ( freq, member ) => this.sound( freq, member );
-    var stp = () => this.wa.stop();
-
-		var b11 = document.getElementById("b11");
-		b11.addEventListener( "click", () => {
-      this.sound( 440, [{"key":1, "val":1}, {"key":4/3, "val":4/3}, {"key":5/3,"val":5/3}]);
-		});
-    var b12 = document.getElementById("b12");
-		b12.addEventListener( "click", function() {
-			snd( 440, [{"key":1, "val":1}, {"key":5/4, "val":5/4}, {"key":6/4,"val":6/4}]);
-		});
-    var b13 = document.getElementById("b13");
-		b13.addEventListener( "click", function() {
-			snd( 440, [{"key":1, "val":1}, {"key":6/5, "val":6/5}, {"key":7/5,"val":7/5}]);
-		});
-		var b14 = document.getElementById("b14");
-
-		b14.addEventListener( "click", function() {
-			snd( 440, [{"key":1, "val":1}, {"key":7/6, "val":7/6}, {"key":8/6,"val":8/6}]);
-		});
-    var b15 = document.getElementById("b15");
-		b15.addEventListener( "click", function() {
-			snd( 440, [{"key":1, "val":1}, {"key":7/5, "val":7/5}, {"key":9/5,"val":9/5}]);
-		});
-    var b16 = document.getElementById("b16");
-		b16.addEventListener( "click", function() {
-			snd( 440, [{"key":1, "val":1}, {"key":8/6, "val":8/6}, {"key":9/6,"val":9/6}]);
-		});
-    var b21 = document.getElementById("b21");
-		b21.addEventListener( "click", function() {
-			snd( 440, [{"key":1, "val":1}, {"key":1.335, "val":4/3}, {"key":1.682,"val":5/3}]);
-		});
-    var b22 = document.getElementById("b22");
-		b22.addEventListener( "click", function() {
-			snd( 440, [{"key":1, "val":1}, {"key":1.26, "val":5/4}, {"key":1.498,"val":6/4}]);
-		});
-    var b23 = document.getElementById("b23");
-		b23.addEventListener( "click", function() {
-			snd( 440, [{"key":1, "val":1}, {"key":1.189, "val":6/5}, {"key":1.414,"val":7/5}]);
-		});
-    var b24 = document.getElementById("b24");
-		b24.addEventListener( "click", function() {
-			snd( 440, [{"key":1, "val":1}, {"key":1.189, "val":7/6}, {"key":1.335,"val":8/6}]);
-		});
-    var b25 = document.getElementById("b25");
-		b25.addEventListener( "click", function() {
-			snd( 440, [{"key":1, "val":1}, {"key":1.414, "val":7/5}, {"key":1.782,"val":9/5}]);
-		});
-    var b26 = document.getElementById("b26");
-		b26.addEventListener( "click", function() {
-			snd( 440, [{"key":1, "val":1}, {"key":1.335, "val":8/6}, {"key":1.498,"val":9/6}]);
-		});
-    var b2 = document.getElementById("stop");
-		b2.addEventListener( "click", function() {
-			stp();
-		});
-
 	}
-
-
 }
 
-/*class gui {
-	static function main( btn1: string, btn2: string, btn3: string, btn4: string ): void {
-		var nl2 = new nylon();
-		var b1 = dom.id(btn1) as HTMLButtonElement;
-		// b1.addEventListener( "click", function( e: Event ): void {
-		// 	nl2.emit( "start", null );
-		// });
-		var b2 = dom.id(btn2) as HTMLButtonElement;
-		b2.addEventListener( "click", function( e: Event ): void {
-			nl2.emit( "stop", null );
-		});
+class Graph1 {
+  background() {
+    this.vc.lineWidth( 3 );
+    this.vc.forecolor( 169, 91, 2 );
+    this.vc.beginPath();
+    this.vc.line( 400, 0, 900, 0 );
+    for( var i=440; i<=880; i+=44 )
+      this.vc.line( i, -5, i, 5 );
+    this.vc.stroke();
 
+    this.vc.forecolor( 0, 0, 0 );
+    this.vc.setFont( "18px sans-serif" );
+    this.vc.beginPath();
+    for( var i=440; i<=880; i+=44 )
+      this.vc.print( i-10, -10, i/440 );
+    this.vc.setFont( "20px sans-serif" );
+    this.vc.print( 620, -22, "one octave" );
+    this.vc.print( 840, -18, "frequency ratio" );
+    this.vc.stroke();
+  }
 
-		// var b3 = dom.id(btn3) as HTMLButtonElement;
-		// b3.addEventListener( "click", function( e: Event ): void {
-		// 	nl2.emit( "stop", null );
-		// 	nl2.emit( "delta", {"top":0.3}:Map.<variant> );
-		// });
-		// var b4 = dom.id(btn4) as HTMLButtonElement;
-		// b4.addEventListener( "click", function( e: Event ): void {
-		// 	nl2.emit( "stop", null );
-		// 	nl2.emit( "delta", {"top":0.5}:Map.<variant> );
-		// });
+  // VCanvas vc1
+	constructor( vc ) {
+		this.vc = vc;
+		//this.vc.scale( 0.787, -9.85, 1.44, 16.04 );
+    this.vc.scale( 350, -30, 630, 40 );
+		this.wa = new WebAudio();
+
+    this.background();
+
+		var nl = new nylon();
+    nl.on( "chord", ( key, params ) => {
+      console.log( params );
+    })
 	}
-}*/
+}
+
+var guisetup = ( nl ) => {
+  document.getElementById("b11").addEventListener( "click", () => {
+    nl.emit( "chord", { "freq":440, waves:[{"ratio":1,"amp":1}, {"ratio":4/3,"amp":4/3}, {"ratio":5/3, "amp":5/3}] } );
+  });
+  document.getElementById("b12").addEventListener( "click", () => {
+    nl.emit( "chord", { "freq":440, waves:[{"ratio":1, "amp":1}, {"ratio":5/4, "amp":5/4}, {"ratio":6/4,"amp":6/4}] });
+  });
+  document.getElementById("b13").addEventListener( "click", () => {
+    nl.emit( "chord", { "freq":440, waves:[{"ratio":1, "amp":1}, {"ratio":6/5, "amp":6/5}, {"ratio":7/5,"amp":7/5}] });
+  });
+  document.getElementById("b14").addEventListener( "click", () => {
+    nl.emit( "chord", { "freq":440, waves:[{"ratio":1, "amp":1}, {"ratio":7/6, "amp":7/6}, {"ratio":8/6,"amp":8/6}] });
+  });
+  document.getElementById("b15").addEventListener( "click", () => {
+    nl.emit( "chord", { "freq":440, waves:[{"ratio":1, "amp":1}, {"ratio":7/5, "amp":7/5}, {"ratio":9/5,"amp":9/5}] });
+  });
+  document.getElementById("b16").addEventListener( "click", () => {
+    nl.emit( "chord", { "freq":440, waves:[{"ratio":1, "amp":1}, {"ratio":8/6, "amp":8/6}, {"ratio":9/6,"amp":9/6}] });
+  });
+  document.getElementById("b21").addEventListener( "click", () => {
+    nl.emit( "chord", { "freq":440, waves:[{"ratio":1, "amp":1}, {"ratio":1.335, "amp":4/3}, {"ratio":1.682,"amp":5/3}] });
+  });
+  document.getElementById("b22").addEventListener( "click", () => {
+    nl.emit( "chord", { "freq":440, waves:[{"ratio":1, "amp":1}, {"ratio":1.26, "amp":5/4}, {"ratio":1.498,"amp":6/4}] });
+  });
+  document.getElementById("b23").addEventListener( "click", () => {
+    nl.emit( "chord", { "freq":440, waves:[{"ratio":1, "amp":1}, {"ratio":1.189, "amp":6/5}, {"ratio":1.414,"amp":7/5}] });
+  });
+  document.getElementById("b24").addEventListener( "click", () => {
+    nl.emit( "chord", { "freq":440, waves:[{"ratio":1, "amp":1}, {"ratio":1.189, "amp":7/6}, {"ratio":1.335,"amp":8/6}] });
+  });
+  document.getElementById("b25").addEventListener( "click", () => {
+    nl.emit( "chord", { "freq":440, waves:[{"ratio":1, "amp":1}, {"ratio":1.414, "amp":7/5}, {"ratio":1.782,"amp":9/5}] });
+  });
+  document.getElementById("b26").addEventListener( "click", () => {
+    nl.emit( "chord", { "freq":440, waves:[{"ratio":1, "amp":1}, {"ratio":1.335, "amp":8/6}, {"ratio":1.498,"amp":9/6}] });
+  });
+  document.getElementById("stop").addEventListener( "click", () => {
+    nl.emit( "stop" );
+  });
+}
+window.addEventListener("load", function(e) {
+  var nl = new nylon();
+  guisetup( nl );
+  var vcb1 = new VCanvas( document.getElementById('graphback1') );
+  new Graph1( vcb1 );
+
+  var vcb2 = new VCanvas( document.getElementById('graphback2') );
+  new Graph2( vcb2 );
+
+  var vc1 = new VCanvas( document.getElementById('graph1') );
+  var vc2 = new VCanvas( document.getElementById('graph2') );
+
+  var mychord = new chord( vc1, vc2 );
+});
