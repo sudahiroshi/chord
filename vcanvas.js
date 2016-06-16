@@ -135,7 +135,7 @@ class VCanvas {
     // 円を描画
 		var xx = (x - this.scaleLeft) * this.canvas.width / this.scaleWidth * this._dir_x;
 		var yy = (y - this.scaleTop) * this.canvas.height / this.scaleHeight * this._dir_y;
-		this.context.moveTo( xx, yy );
+		this.context.moveTo( xx+radius, yy );
 		this.context.arc( xx, yy, radius, 0, Math.PI*2, false);
 	}
 
