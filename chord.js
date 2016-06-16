@@ -30,12 +30,6 @@ class SoundGenerator {
 }
 
 class chord {
-	/*static function main( canvas1Id: string ) : void {
-		var elm1 = dom.id(canvas1Id) as HTMLCanvasElement;
-		var vc1 = new VCanvas( elm1 );
-		var mychord = new chord( vc1 );
-	}*/
-
   constructor( vc1, vc2 ) {
     this.sg0 = new SoundGenerator();
     this.sg1 = new SoundGenerator();
@@ -112,6 +106,20 @@ class chord {
       }
       this._playing = false;
     });
+
+    // display difference
+    nl.on( "chord", ( key, params ) => {
+      var f0 = params["freq"];
+      var f1 = params["freq"] * params["waves"][1]["ratio"];
+      var f2 = params["freq"] * params["waves"][2]["ratio"];
+
+      var v0 = params["freq"] * params["waves"][0]["amp"];
+      var v1 = params["freq"] * params["waves"][1]["amp"];
+      var v2 = params["freq"] * params["waves"][2]["amp"];
+
+      document.getElementById( 'result1' ).innerHTML = Math.abs( Math.floor( f1 - v1 ) ) + "Hz";
+      document.getElementById( 'result2' ).innerHTML = Math.abs( Math.floor( f2 - v2 ) ) + "Hz";
+    });
   }
 }
 
@@ -129,7 +137,7 @@ class Graph2 {
     this.vc.setFont( "18px sans-serif" );
     this.vc.beginPath();
     var name = { "c":440, "d":513, "e":586, "f":623, "g":697, "a":770, "b":843}
-    for( let tone in name )
+    for( var tone in name )
     {
       this.vc.print( name[tone]-5, 20, tone );
       console.log( "freq:" + name[tone] + "Hz = " + tone );
