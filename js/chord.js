@@ -1,10 +1,22 @@
+/**
+ * @public
+ * 音を再生するための裏方を取り仕切るクラス
+ */
 class SoundGenerator {
+  /**
+   * コンストラクタでAudioContextを初期化する
+   */
   constructor() {
     this.context = new AudioContext();
     this.osc = null;
     this._playing = false;
   }
 
+  /**
+   * 任意の周波数の音を鳴らす
+   * @param { number } freq 周波数
+   * @param { number } gain 音量（0〜1）
+   */
   start( freq, gain ) {
     if( this._playing == false ) {
       var osc = this.context.createOscillator();
@@ -20,6 +32,9 @@ class SoundGenerator {
     }
   }
 
+  /**
+   * 音を止める
+   */
   stop() {
     if( this._playing == true ) {
       this.osc.stop();

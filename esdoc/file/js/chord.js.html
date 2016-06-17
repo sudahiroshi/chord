@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <base data-ice="baseUrl" href="../../">
+  <title data-ice="title">js/chord.js | API Document</title>
+  <link type="text/css" rel="stylesheet" href="css/style.css">
+  <link type="text/css" rel="stylesheet" href="css/prettify-tomorrow.css">
+  <script src="script/prettify/prettify.js"></script>
+  
+  
+  <script src="script/manual.js"></script>
+</head>
+<body class="layout-container" data-ice="rootContainer">
+
+<header>
+  <a href="./">Home</a>
+  
+  <a href="identifiers.html">Reference</a>
+  <a href="source.html">Source</a>
+  
+  <a data-ice="repoURL" href="https://github.com/sudahiroshi/chord" class="repo-url-github">Repository</a>
+  <div class="search-box">
+  <span>
+    <img src="./image/search.png">
+    <span class="search-input-edge"></span><input class="search-input"><span class="search-input-edge"></span>
+  </span>
+    <ul class="search-result"></ul>
+  </div>
+</header>
+
+<nav class="navigation" data-ice="nav"><div>
+  <ul>
+    
+  </ul>
+</div>
+</nav>
+
+<div class="content" data-ice="content"><h1 data-ice="title">js/chord.js</h1>
+<pre class="source-code line-number raw-source-code"><code class="prettyprint linenums" data-ice="content">/**
+ * @public
+ * &#x97F3;&#x3092;&#x518D;&#x751F;&#x3059;&#x308B;&#x305F;&#x3081;&#x306E;&#x88CF;&#x65B9;&#x3092;&#x53D6;&#x308A;&#x4ED5;&#x5207;&#x308B;&#x30AF;&#x30E9;&#x30B9;
+ */
+class SoundGenerator {
+  /**
+   * &#x30B3;&#x30F3;&#x30B9;&#x30C8;&#x30E9;&#x30AF;&#x30BF;&#x3067;AudioContext&#x3092;&#x521D;&#x671F;&#x5316;&#x3059;&#x308B;
+   */
+  constructor() {
+    this.context = new AudioContext();
+    this.osc = null;
+    this._playing = false;
+  }
+
+  /**
+   * &#x4EFB;&#x610F;&#x306E;&#x5468;&#x6CE2;&#x6570;&#x306E;&#x97F3;&#x3092;&#x9CF4;&#x3089;&#x3059;
+   * @param { number } freq &#x5468;&#x6CE2;&#x6570;
+   * @param { number } gain &#x97F3;&#x91CF;&#xFF08;0&#x301C;1&#xFF09;
+   */
+  start( freq, gain ) {
+    if( this._playing == false ) {
+      var osc = this.context.createOscillator();
+      var gn = this.context.createGain();
+      gn.gain.value = gain * 0.5;
+
+      osc.frequency.value = freq;
+      osc.connect( gn );
+      gn.connect( this.context.destination );
+      this.osc = osc;
+      osc.start();
+      this._playing = true;
+    }
+  }
+
+  /**
+   * &#x97F3;&#x3092;&#x6B62;&#x3081;&#x308B;
+   */
+  stop() {
+    if( this._playing == true ) {
+      this.osc.stop();
+      this._playing = false;
+    }
+  }
+
+}
+
+class chord {
+  constructor( vc1, vc2 ) {
+    this.sg0 = new SoundGenerator();
+    this.sg1 = new SoundGenerator();
+    this.sg2 = new SoundGenerator();
+    this._palying = true;
+
+    vc1.scale( 350, -30, 630, 40 );
+    vc2.scale( 350, -30, 630, 70 );
+    var nl = new nylon();
+
+    // Upper Graph
+    nl.on( &quot;chord&quot;, ( key, params ) =&gt; {
+      vc1.cls();
+      vc1.forecolor( 200, 0, 0 );
+      vc1.drawWidth( 2 );
+      vc1.beginPath();
+      vc1.circle( params[&quot;freq&quot;], 0, 5 );
+      vc1.circle( params[&quot;freq&quot;] * params[&quot;waves&quot;][1][&quot;ratio&quot;], 0, 5 );
+      vc1.circle( params[&quot;freq&quot;] * params[&quot;waves&quot;][2][&quot;ratio&quot;], 0, 5 );
+      vc1.stroke();
+    });
+
+    // Lower Graph
+    nl.on( &quot;chord&quot;, ( key, params ) =&gt; {
+      vc2.cls();
+      vc2.forecolor( 200, 0, 0 );
+      vc2.drawWidth( 2 );
+      vc2.beginPath();
+      var f0 = params[&quot;freq&quot;];
+      var f1 = params[&quot;freq&quot;] * params[&quot;waves&quot;][1][&quot;ratio&quot;];
+      var f2 = params[&quot;freq&quot;] * params[&quot;waves&quot;][2][&quot;ratio&quot;];
+      vc2.circle( f0, 0, 5 );
+      vc2.circle( f1, 0, 5 );
+      vc2.circle( f2, 0, 5 );
+      vc2.stroke();
+
+      vc2.setFont( &quot;20px sans-serif&quot; );
+      vc2.forecolor( 0, 0, 0 );
+      vc2.beginPath();
+      vc2.print( f0-20, -15, Math.floor(f0) + &quot;Hz&quot; );
+      vc2.print( f1-20, -15, Math.floor(f1) + &quot;Hz&quot; );
+      vc2.print( f2-20, -15, Math.floor(f2) + &quot;Hz&quot; );
+      vc2.stroke();
+    });
+
+    // sound on
+    nl.on( &quot;chord&quot;, ( key, params ) =&gt; {
+      if( this._playing == true ) {
+        this.sg0.stop();
+        this.sg1.stop();
+        this.sg2.stop();
+      }
+      var f0 = params[&quot;freq&quot;];
+      var f1 = params[&quot;freq&quot;] * params[&quot;waves&quot;][1][&quot;ratio&quot;];
+      var f2 = params[&quot;freq&quot;] * params[&quot;waves&quot;][2][&quot;ratio&quot;];
+
+      var v0 = params[&quot;waves&quot;][0][&quot;amp&quot;];
+      var v1 = params[&quot;waves&quot;][1][&quot;amp&quot;];
+      var v2 = params[&quot;waves&quot;][2][&quot;amp&quot;];
+
+      this.sg0.start( f0, v0 );
+      this.sg1.start( f1, v1 );
+      this.sg2.start( f2, v2 );
+
+      this._playing = true;
+    });
+
+    // sound off
+    nl.on( &quot;stop&quot;, ( key, params ) =&gt; {
+      if( this._playing == true ) {
+        this.sg0.stop();
+        this.sg1.stop();
+        this.sg2.stop();
+      }
+      this._playing = false;
+    });
+
+    // display difference
+    nl.on( &quot;chord&quot;, ( key, params ) =&gt; {
+      var f0 = params[&quot;freq&quot;];
+      var f1 = params[&quot;freq&quot;] * params[&quot;waves&quot;][1][&quot;ratio&quot;];
+      var f2 = params[&quot;freq&quot;] * params[&quot;waves&quot;][2][&quot;ratio&quot;];
+
+      var v0 = params[&quot;freq&quot;] * params[&quot;waves&quot;][0][&quot;amp&quot;];
+      var v1 = params[&quot;freq&quot;] * params[&quot;waves&quot;][1][&quot;amp&quot;];
+      var v2 = params[&quot;freq&quot;] * params[&quot;waves&quot;][2][&quot;amp&quot;];
+
+      document.getElementById( &apos;result1&apos; ).innerHTML = Math.abs( Math.floor( f1 - v1 ) ) + &quot;Hz&quot;;
+      document.getElementById( &apos;result2&apos; ).innerHTML = Math.abs( Math.floor( f2 - v2 ) ) + &quot;Hz&quot;;
+    });
+  }
+}
+
+class Graph2 {
+  background() {
+    this.vc.lineWidth( 3 );
+    this.vc.forecolor( 47, 81, 115 );
+    this.vc.beginPath();
+    this.vc.line( 400, 0, 900, 0 );
+    for( var i=440; i&lt;=880; i+=440/12 )
+      this.vc.line( i, -10, i, 10 );
+    this.vc.stroke();
+
+    this.vc.forecolor( 0, 0, 0 );
+    this.vc.setFont( &quot;18px sans-serif&quot; );
+    this.vc.beginPath();
+    var name = { &quot;c&quot;:440, &quot;d&quot;:513, &quot;e&quot;:586, &quot;f&quot;:623, &quot;g&quot;:697, &quot;a&quot;:770, &quot;b&quot;:843}
+    for( var tone in name )
+    {
+      this.vc.print( name[tone]-5, 20, tone );
+      console.log( &quot;freq:&quot; + name[tone] + &quot;Hz = &quot; + tone );
+    }
+    this.vc.setFont( &quot;24px sans-serif&quot; );
+    this.vc.print( 580, 35, &quot;12 tone tempeament&quot; );
+    this.vc.stroke();
+  }
+
+  // VCanvas vc
+	constructor( vc ) {
+		this.vc = vc;
+    this.vc.scale( 350, -30, 630, 70 );
+
+    this.background();
+	}
+}
+
+class Graph1 {
+  background() {
+    this.vc.lineWidth( 3 );
+    this.vc.forecolor( 169, 91, 2 );
+    this.vc.beginPath();
+    this.vc.line( 400, 0, 900, 0 );
+    for( var i=440; i&lt;=880; i+=44 )
+      this.vc.line( i, -5, i, 5 );
+    this.vc.stroke();
+
+    this.vc.forecolor( 0, 0, 0 );
+    this.vc.setFont( &quot;18px sans-serif&quot; );
+    this.vc.beginPath();
+    for( var i=440; i&lt;=880; i+=44 )
+      this.vc.print( i-10, -10, i/440 );
+    this.vc.setFont( &quot;20px sans-serif&quot; );
+    this.vc.print( 620, -22, &quot;one octave&quot; );
+    this.vc.print( 840, -18, &quot;frequency ratio&quot; );
+    this.vc.stroke();
+  }
+
+  // VCanvas vc1
+	constructor( vc ) {
+		this.vc = vc;
+		//this.vc.scale( 0.787, -9.85, 1.44, 16.04 );
+    this.vc.scale( 350, -30, 630, 40 );
+
+    this.background();
+
+		var nl = new nylon();
+    nl.on( &quot;chord&quot;, ( key, params ) =&gt; {
+      console.log( params );
+    })
+	}
+}
+
+var guisetup = ( nl ) =&gt; {
+  document.getElementById(&quot;b11&quot;).addEventListener( &quot;click&quot;, () =&gt; {
+    nl.emit( &quot;chord&quot;, { &quot;freq&quot;:440, waves:[{&quot;ratio&quot;:1,&quot;amp&quot;:1}, {&quot;ratio&quot;:4/3,&quot;amp&quot;:4/3}, {&quot;ratio&quot;:5/3, &quot;amp&quot;:5/3}] } );
+  });
+  document.getElementById(&quot;b12&quot;).addEventListener( &quot;click&quot;, () =&gt; {
+    nl.emit( &quot;chord&quot;, { &quot;freq&quot;:440, waves:[{&quot;ratio&quot;:1, &quot;amp&quot;:1}, {&quot;ratio&quot;:5/4, &quot;amp&quot;:5/4}, {&quot;ratio&quot;:6/4,&quot;amp&quot;:6/4}] });
+  });
+  document.getElementById(&quot;b13&quot;).addEventListener( &quot;click&quot;, () =&gt; {
+    nl.emit( &quot;chord&quot;, { &quot;freq&quot;:440, waves:[{&quot;ratio&quot;:1, &quot;amp&quot;:1}, {&quot;ratio&quot;:6/5, &quot;amp&quot;:6/5}, {&quot;ratio&quot;:7/5,&quot;amp&quot;:7/5}] });
+  });
+  document.getElementById(&quot;b14&quot;).addEventListener( &quot;click&quot;, () =&gt; {
+    nl.emit( &quot;chord&quot;, { &quot;freq&quot;:440, waves:[{&quot;ratio&quot;:1, &quot;amp&quot;:1}, {&quot;ratio&quot;:7/6, &quot;amp&quot;:7/6}, {&quot;ratio&quot;:8/6,&quot;amp&quot;:8/6}] });
+  });
+  document.getElementById(&quot;b15&quot;).addEventListener( &quot;click&quot;, () =&gt; {
+    nl.emit( &quot;chord&quot;, { &quot;freq&quot;:440, waves:[{&quot;ratio&quot;:1, &quot;amp&quot;:1}, {&quot;ratio&quot;:7/5, &quot;amp&quot;:7/5}, {&quot;ratio&quot;:9/5,&quot;amp&quot;:9/5}] });
+  });
+  document.getElementById(&quot;b16&quot;).addEventListener( &quot;click&quot;, () =&gt; {
+    nl.emit( &quot;chord&quot;, { &quot;freq&quot;:440, waves:[{&quot;ratio&quot;:1, &quot;amp&quot;:1}, {&quot;ratio&quot;:8/6, &quot;amp&quot;:8/6}, {&quot;ratio&quot;:9/6,&quot;amp&quot;:9/6}] });
+  });
+  document.getElementById(&quot;b21&quot;).addEventListener( &quot;click&quot;, () =&gt; {
+    nl.emit( &quot;chord&quot;, { &quot;freq&quot;:440, waves:[{&quot;ratio&quot;:1, &quot;amp&quot;:1}, {&quot;ratio&quot;:1.335, &quot;amp&quot;:4/3}, {&quot;ratio&quot;:1.682,&quot;amp&quot;:5/3}] });
+  });
+  document.getElementById(&quot;b22&quot;).addEventListener( &quot;click&quot;, () =&gt; {
+    nl.emit( &quot;chord&quot;, { &quot;freq&quot;:440, waves:[{&quot;ratio&quot;:1, &quot;amp&quot;:1}, {&quot;ratio&quot;:1.26, &quot;amp&quot;:5/4}, {&quot;ratio&quot;:1.498,&quot;amp&quot;:6/4}] });
+  });
+  document.getElementById(&quot;b23&quot;).addEventListener( &quot;click&quot;, () =&gt; {
+    nl.emit( &quot;chord&quot;, { &quot;freq&quot;:440, waves:[{&quot;ratio&quot;:1, &quot;amp&quot;:1}, {&quot;ratio&quot;:1.189, &quot;amp&quot;:6/5}, {&quot;ratio&quot;:1.414,&quot;amp&quot;:7/5}] });
+  });
+  document.getElementById(&quot;b24&quot;).addEventListener( &quot;click&quot;, () =&gt; {
+    nl.emit( &quot;chord&quot;, { &quot;freq&quot;:440, waves:[{&quot;ratio&quot;:1, &quot;amp&quot;:1}, {&quot;ratio&quot;:1.189, &quot;amp&quot;:7/6}, {&quot;ratio&quot;:1.335,&quot;amp&quot;:8/6}] });
+  });
+  document.getElementById(&quot;b25&quot;).addEventListener( &quot;click&quot;, () =&gt; {
+    nl.emit( &quot;chord&quot;, { &quot;freq&quot;:440, waves:[{&quot;ratio&quot;:1, &quot;amp&quot;:1}, {&quot;ratio&quot;:1.414, &quot;amp&quot;:7/5}, {&quot;ratio&quot;:1.782,&quot;amp&quot;:9/5}] });
+  });
+  document.getElementById(&quot;b26&quot;).addEventListener( &quot;click&quot;, () =&gt; {
+    nl.emit( &quot;chord&quot;, { &quot;freq&quot;:440, waves:[{&quot;ratio&quot;:1, &quot;amp&quot;:1}, {&quot;ratio&quot;:1.335, &quot;amp&quot;:8/6}, {&quot;ratio&quot;:1.498,&quot;amp&quot;:9/6}] });
+  });
+  document.getElementById(&quot;stop&quot;).addEventListener( &quot;click&quot;, () =&gt; {
+    nl.emit( &quot;stop&quot; );
+  });
+}
+window.addEventListener(&quot;load&quot;, function(e) {
+  var nl = new nylon();
+  guisetup( nl );
+  var vcb1 = new VCanvas( document.getElementById(&apos;graphback1&apos;) );
+  new Graph1( vcb1 );
+
+  var vcb2 = new VCanvas( document.getElementById(&apos;graphback2&apos;) );
+  new Graph2( vcb2 );
+
+  var vc1 = new VCanvas( document.getElementById(&apos;graph1&apos;) );
+  var vc2 = new VCanvas( document.getElementById(&apos;graph2&apos;) );
+
+  var mychord = new chord( vc1, vc2 );
+});
+</code></pre>
+
+</div>
+
+<footer class="footer">
+  Generated by <a href="https://esdoc.org">ESDoc<span data-ice="esdocVersion">(0.4.7)</span></a>
+</footer>
+
+<script src="script/search_index.js"></script>
+<script src="script/search.js"></script>
+<script src="script/pretty-print.js"></script>
+<script src="script/inherited-summary.js"></script>
+<script src="script/test-summary.js"></script>
+<script src="script/inner-link.js"></script>
+<script src="script/patch-for-local.js"></script>
+</body>
+</html>

@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <base data-ice="baseUrl" href="../../">
+  <title data-ice="title">js/nylon.js | API Document</title>
+  <link type="text/css" rel="stylesheet" href="css/style.css">
+  <link type="text/css" rel="stylesheet" href="css/prettify-tomorrow.css">
+  <script src="script/prettify/prettify.js"></script>
+  
+  
+  <script src="script/manual.js"></script>
+</head>
+<body class="layout-container" data-ice="rootContainer">
+
+<header>
+  <a href="./">Home</a>
+  
+  <a href="identifiers.html">Reference</a>
+  <a href="source.html">Source</a>
+  
+  <a data-ice="repoURL" href="https://github.com/sudahiroshi/chord" class="repo-url-github">Repository</a>
+  <div class="search-box">
+  <span>
+    <img src="./image/search.png">
+    <span class="search-input-edge"></span><input class="search-input"><span class="search-input-edge"></span>
+  </span>
+    <ul class="search-result"></ul>
+  </div>
+</header>
+
+<nav class="navigation" data-ice="nav"><div>
+  <ul>
+    
+  </ul>
+</div>
+</nav>
+
+<div class="content" data-ice="content"><h1 data-ice="title">js/nylon.js</h1>
+<pre class="source-code line-number raw-source-code"><code class="prettyprint linenums" data-ice="content">
+/**
+ * &#x30AF;&#x30E9;&#x30A4;&#x30A2;&#x30F3;&#x30C8;&#x5074;nylon&#x306E;&#x672C;&#x4F53;
+ * nylon&#x95A2;&#x4FC2;&#x306E;&#x6A5F;&#x80FD;&#x3092;&#x4F7F;&#x3046;&#x5834;&#x5408;&#x306F;&#x5FC5;&#x305A;&#x8AAD;&#x307F;&#x8FBC;&#x3093;&#x3067;&#x304F;&#x3060;&#x3055;&#x3044;
+ */
+class nylon {
+
+	/**
+	 * constructor
+	 * &#x30B0;&#x30ED;&#x30FC;&#x30D0;&#x30EB;&#x5909;&#x6570;nylon&#xFF0C;nylon.map&#x306A;&#x3069;&#x3092;&#x521D;&#x671F;&#x5316;&#x3057;&#x307E;&#x3059;
+	 */
+	constructor() {
+		/**
+		 * @type {hash}
+		 */
+		this.nylon = window.nylon;
+
+		/**
+		 * @type {window}
+		 */
+		this.parent = window.parent;
+
+		if( window.nylon == null ) {
+			window.nylon = {};
+		}
+		if( window.nylon.map == null ) {
+			window.nylon.map = {};
+		}
+
+		/**
+		 * @type {array}
+		 */
+		this.map = window.nylon.map;
+	}
+
+	/**
+	 * &#x53D7;&#x3051;&#x53D6;&#x3063;&#x305F;&#x30A4;&#x30D9;&#x30F3;&#x30C8;&#x60C5;&#x5831;&#x3092;&#x305D;&#x306E;&#x307E;&#x307E;&#x5916;&#x90E8;&#x306B;&#x6E21;&#x3059;&#x305F;&#x3081;&#x306E;&#x95A2;&#x6570;
+	 * nylon.iFrame&#x3067;&#x4F7F;&#x7528;&#x3057;&#x307E;&#x3059;
+	 * @param {function} fn - &#x30A4;&#x30D9;&#x30F3;&#x30C8;&#x3092;&#x51E6;&#x7406;&#x3059;&#x308B;&#x30B3;&#x30FC;&#x30EB;&#x30D0;&#x30C3;&#x30AF;&#x95A2;&#x6570;
+	 */
+	setPassThrough( fn ) {
+		if( window.nylon.passthrough == null ) {
+			window.nylon.passthrough = fn;
+		} else {
+			console.log( &quot;Error by duplexy registration&quot; );
+		}
+	}
+
+	/**
+	 * &#x30AD;&#x30FC;&#x30EF;&#x30FC;&#x30C9;&#x3068;&#xFF0C;&#x30AD;&#x30FC;&#x30EF;&#x30FC;&#x30C9;&#x306B;&#x5BFE;&#x3059;&#x308B;&#x51E6;&#x7406;&#x3092;&#x767B;&#x9332;&#x3059;&#x308B;&#x95A2;&#x6570;
+	 * @param { string } keyword - &#x30AD;&#x30FC;&#x30EF;&#x30FC;&#x30C9;
+	 * @param { function } fn - &#x30B3;&#x30FC;&#x30EB;&#x30D0;&#x30C3;&#x30AF;&#x95A2;&#x6570;
+	 */
+	on( keyword, fn ) {
+		console.log( this );
+		if( this.map[ keyword ] == null ) {
+			//if( window != parent ) {
+			//	this.parent.postMessage( { &quot;keyword&quot;: [&quot;on&quot;], &quot;params&quot;: {&quot;keyword&quot;: [&quot;on&quot;], &quot;key&quot;:keyword}}, nylon.origin );
+			//}
+			console.log( &quot;new keyword : &quot; + keyword );
+			this.map[ keyword ] = [ new nylonfunc( fn, this ) ];
+		} else {
+			this.map[ keyword ].push( new nylonfunc( fn, this ) );
+		}
+	}
+
+	/**
+	 * &#x30A4;&#x30D9;&#x30F3;&#x30C8;&#x3092;&#x8D77;&#x3053;&#x3059;&#x95A2;&#x6570;
+	 * @param { string[] } keys - &#x30AD;&#x30FC;&#x30EF;&#x30FC;&#x30C9;&#x306E;&#x914D;&#x5217;
+	 * @param { hash } params - &#x30D1;&#x30E9;&#x30E1;&#x30FC;&#x30BF;&#xFF08;&#x30CF;&#x30C3;&#x30B7;&#x30E5;&#x3067;&#x4E0E;&#x3048;&#x308B;&#xFF09;
+	 */
+	emitByArray( keys, params ) {
+		if( window.nylon.passthrough != null ) {
+			window.nylon.passthrough( keys, params, this );
+		}
+		if( params == null ) {
+			params = {};
+		}
+		console.log( &quot;--&gt;&quot; + params[&quot;keywords&quot;] );
+
+		if( params[&quot;keywords&quot;] == null ) {
+			console.log(&quot;params.keywords&#x304C;null&quot;);
+			params[&quot;keywords&quot;] = keys;
+		}
+
+		for( let key of keys ) {
+			if( this.map[ key ] == null ) {
+				console.log( &quot;Invarid keyword &quot; + key );
+			} else {
+				for( let element of this.map[ key ] ) {
+					//console.log( element );
+					//console.log( &quot;--&gt;&quot; + element.obj );
+					if( element.obj != this ) {
+						element.fn( key, params );
+					}
+				}
+			}
+		}
+	}
+
+	/**
+	 * &#x30A4;&#x30D9;&#x30F3;&#x30C8;&#x3092;&#x8D77;&#x3053;&#x3059;&#x95A2;&#x6570;
+	 * @param { string } keyword - &#x30AD;&#x30FC;&#x30EF;&#x30FC;&#x30C9;&#xFF0E;|&#x3067;&#x533A;&#x5207;&#x308B;&#x3053;&#x3068;&#x3067;&#x8907;&#x6570;&#x30AD;&#x30FC;&#x30EF;&#x30FC;&#x30C9;&#x3092;&#x4E0E;&#x3048;&#x308B;
+	 * @param { hash } params - &#x30D1;&#x30E9;&#x30E1;&#x30FC;&#x30BF;&#xFF08;&#x30CF;&#x30C3;&#x30B7;&#x30E5;&#x3067;&#x4E0E;&#x3048;&#x308B;&#xFF09;
+	 */
+	emit( keyword, params ) {
+		var keys = keyword.split( &quot;|&quot; );
+		this.emitByArray( keys, params );
+	}
+}
+
+//export default nylon;
+//exports = module.exports = nylon;
+
+/**
+ * nylon&#x306B;&#x767B;&#x9332;&#x3059;&#x308B;&#x95A2;&#x6570;&#x306E;&#x30AF;&#x30E9;&#x30B9;
+ */
+class nylonfunc {
+
+	/**
+	 * &#x30B3;&#x30F3;&#x30B9;&#x30C8;&#x30E9;&#x30AF;&#x30BF;
+	 * @param { function } func - &#x30B3;&#x30FC;&#x30EB;&#x30D0;&#x30C3;&#x30AF;&#x95A2;&#x6570;
+	 * @param { nylon } object - nylon&#x30AA;&#x30D6;&#x30B8;&#x30A7;&#x30AF;&#x30C8;
+	 */
+	constructor( func, object ) {
+		/** @type { function } */
+		this.fn = func;
+		/** @type { nylon } */
+		this.obj = object;
+	}
+}
+//export default nylonfunc;
+</code></pre>
+
+</div>
+
+<footer class="footer">
+  Generated by <a href="https://esdoc.org">ESDoc<span data-ice="esdocVersion">(0.4.7)</span></a>
+</footer>
+
+<script src="script/search_index.js"></script>
+<script src="script/search.js"></script>
+<script src="script/pretty-print.js"></script>
+<script src="script/inherited-summary.js"></script>
+<script src="script/test-summary.js"></script>
+<script src="script/inner-link.js"></script>
+<script src="script/patch-for-local.js"></script>
+</body>
+</html>

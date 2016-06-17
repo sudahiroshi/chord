@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <base data-ice="baseUrl" href="../../">
+  <title data-ice="title">js/vcanvas.js | API Document</title>
+  <link type="text/css" rel="stylesheet" href="css/style.css">
+  <link type="text/css" rel="stylesheet" href="css/prettify-tomorrow.css">
+  <script src="script/prettify/prettify.js"></script>
+  
+  
+  <script src="script/manual.js"></script>
+</head>
+<body class="layout-container" data-ice="rootContainer">
+
+<header>
+  <a href="./">Home</a>
+  
+  <a href="identifiers.html">Reference</a>
+  <a href="source.html">Source</a>
+  
+  <a data-ice="repoURL" href="https://github.com/sudahiroshi/chord" class="repo-url-github">Repository</a>
+  <div class="search-box">
+  <span>
+    <img src="./image/search.png">
+    <span class="search-input-edge"></span><input class="search-input"><span class="search-input-edge"></span>
+  </span>
+    <ul class="search-result"></ul>
+  </div>
+</header>
+
+<nav class="navigation" data-ice="nav"><div>
+  <ul>
+    
+  </ul>
+</div>
+</nav>
+
+<div class="content" data-ice="content"><h1 data-ice="title">js/vcanvas.js</h1>
+<pre class="source-code line-number raw-source-code"><code class="prettyprint linenums" data-ice="content">/**
+ * @public
+ * Canvas with virtual coordinate
+ */
+class VCanvas {
+
+  /**
+   * @param { HTMLCanvasElement } canvasElement HTML&#x306E;Canvas&#x8981;&#x7D20;
+   */
+  constructor( canvasElement ) {
+    /** @private */
+    this._canvas = canvasElement;
+    this._context = this._canvas.getContext(&quot;2d&quot;);
+    this._scaleWidth = null;
+    this._scaleHeight = null;
+    this._scaleTop = null;
+    this._slaceLeft = null;
+    this._scalable = false;
+    var _dir_x = 1; // X&#x8EF8;&#x306E;&#x5411;&#x304D;
+    var _dir_y = 1; // Y&#x8EF8;&#x306E;&#x5411;&#x304D;
+    var _color = [0,0,0,1]; // &#x8272;&#x306E;&#x521D;&#x671F;&#x5024;&#x306F;&#x9ED2;
+  };
+
+  /**
+   * &#x4EEE;&#x60F3;&#x5EA7;&#x6A19;&#x3092;&#x8A2D;&#x5B9A;&#x3059;&#x308B;&#xFF0E;
+   *
+   * @param { number } left &#x5DE6;&#x7AEF;&#x306E;&#x5EA7;&#x6A19;
+   * @param { number } top &#x4E0A;&#x7AEF;&#x306E;&#x5EA7;&#x6A19;
+   * @param { number } width &#x4EEE;&#x60F3;&#x5EA7;&#x6A19;&#x306E;&#x5E45;
+   * @param { number } height &#x4EEE;&#x60F3;&#x5EA7;&#x6A19;&#x306E;&#x9AD8;&#x3055;
+   */
+  scale( left, top, width, height ) {
+    this._scaleLeft = left;
+    this._scaleTop = top;
+    this._scaleWidth = width;
+    this._scaleHeight = height;
+    this._scalable = true;
+
+    if( this._scaleWidth &lt; 0 ) {
+      this._scaleWidth = -this.scaleWidth;
+      this._dir_x = -1;
+    } else this._dir_x = 1;
+
+    if( this._scaleHeight &lt; 0 ) {
+      this._scaleHeight = -this.scaleHeight;
+      this._dir_y = -1;
+    } else this._dir_y = 1;
+  };
+
+  /**
+   * &#x63CF;&#x753B;&#x3059;&#x308B;&#x969B;&#x306E;&#x8272;&#x3092;&#x8A2D;&#x5B9A;&#x3059;&#x308B;&#xFF0E;
+   * &#x30D1;&#x30E9;&#x30E1;&#x30FC;&#x30BF;r,g,b&#x306F;&#x3044;&#x305A;&#x308C;&#x3082;0&#x301C;255&#xFF0C;a&#x306F;0&#x301C;1&#xFF0E;
+   *
+   * @param { number } r &#x8D64;
+   * @param { number } g &#x7DD1;
+   * @param { number } b &#x9752;
+   * @param { number } a &#x900F;&#x660E;&#x5EA6;
+   */
+  forecolor( r, g, b, a ) {
+    var alpha = a;
+    if( arguments.length == 3 ) alpha = 1
+		this._color = [ r, g, b, alpha ];
+		this._context.fillStyle = &apos;rgba(&apos; + this._color.join(&apos;,&apos;).toString() + &apos;)&apos;;
+		this._context.strokeStyle = &apos;rgba(&apos; + this._color.join(&apos;,&apos;).toString() + &apos;)&apos;;
+	}
+
+  /**
+   * &#x7DDA;&#x306E;&#x592A;&#x3055;&#x3092;&#x8A2D;&#x5B9A;&#x3059;&#x308B;&#xFF0E;
+   * &#x5358;&#x4F4D;&#x306F;&#x30D4;&#x30AF;&#x30BB;&#x30EB;&#xFF0E;
+   *
+   * @param { number } width &#x7DDA;&#x306E;&#x592A;&#x3055;
+   */
+  lineWidth( width ) {
+		this._context.lineWidth = width;
+	}
+
+  /**
+   * &#x7DDA;&#x306E;&#x592A;&#x3055;&#x3092;&#x8A2D;&#x5B9A;&#x3059;&#x308B;&#xFF0E;
+   * lineWidth&#x3068;&#x540C;&#x3058;&#x50CD;&#x304D;&#xFF0E;
+   *
+   * @param { number} width &#x7DDA;&#x306E;&#x592A;&#x3055;
+   */
+	drawWidth( width ) {
+		this._context.lineWidth = width;
+	}
+
+  /**
+   * &#x30D5;&#x30A9;&#x30F3;&#x30C8;&#x3092;&#x8A2D;&#x5B9A;&#x3059;&#x308B;&#xFF0E;
+   *
+   * @param { string } font &#x30D5;&#x30A9;&#x30F3;&#x30C8;&#x60C5;&#x5831;
+   */
+  setFont( font ) {
+		this._context.font = font;
+	}
+
+  /**
+   * &#x7DDA;&#x3092;&#x63CF;&#x753B;&#x3059;&#x308B;
+   *
+   * @param { number } x1 &#x59CB;&#x70B9;&#x306E;X&#x5EA7;&#x6A19;
+   * @param { number } y1 &#x59CB;&#x70B9;&#x306E;Y&#x5EA7;&#x6A19;
+   * @param { number } x2 &#x7D42;&#x70B9;&#x306E;X&#x5EA7;&#x6A19;
+   * @param { number } y2 &#x7D42;&#x70B9;&#x306E;X&#x5EA7;&#x6A19;
+   */
+  line( x1, y1, x2, y2 ) {
+    if( this._scalable ) {
+			var xx1 = (x1 - this._scaleLeft) * this._canvas.width / this._scaleWidth * this._dir_x;
+			var xx2 = (x2 - this._scaleLeft) * this._canvas.width / this._scaleWidth * this._dir_x;
+			var yy1 = (y1 - this._scaleTop) * this._canvas.height / this._scaleHeight * this._dir_y;
+			var yy2 = (y2 - this._scaleTop) * this._canvas.height / this._scaleHeight * this._dir_y;
+		} else {
+			var xx1 = x1;
+			var xx2 = x2;
+			var yy1 = y1;
+			var yy2 = y2;
+		}
+		this._context.moveTo( xx1, yy1 );
+		this._context.lineTo( xx2, yy2 );
+  }
+
+  /**
+   * &#x9023;&#x7D9A;&#x7684;&#x306B;&#x7DDA;&#x3092;&#x63CF;&#x753B;&#x3059;&#x308B;&#x969B;&#x306E;&#x59CB;&#x70B9;&#x3092;&#x8A2D;&#x5B9A;&#x3059;&#x308B;
+   *
+   * @param { number } x &#x59CB;&#x70B9;&#x306E;X&#x5EA7;&#x6A19;
+   * @param { number } y &#x59CB;&#x70B9;&#x306E;Y&#x5EA7;&#x6A19;
+   */
+  lineStart( x, y ) {
+		if( this._scalable ) {
+			var xx = (x - this._scaleLeft) * this._canvas.width / this._scaleWidth * this._dir_x;
+			var yy = (y - this._scaleTop) * this._canvas.height / this._scaleHeight * this._dir_y;
+		} else {
+			var xx = x;
+			var yy = y;
+		}
+		this._context.moveTo( xx, yy );
+	}
+
+  /**
+   * &#x9023;&#x7D9A;&#x7684;&#x306B;&#x7DDA;&#x3092;&#x63CF;&#x753B;&#x3059;&#x308B;&#xFF0E;&#x6B63;&#x78BA;&#x306B;&#x306F;&#x76F4;&#x524D;&#x306B;&#x63CF;&#x753B;&#x3055;&#x308C;&#x305F;&#x5EA7;&#x6A19;&#x304B;&#x3089;&#x7DDA;&#x3092;&#x5F15;&#x304F;
+   *
+   * @param { number } x &#x7D42;&#x70B9;&#x306E;X&#x5EA7;&#x6A19;
+   * @param { number } y &#x7D42;&#x70B9;&#x306E;Y&#x5EA7;&#x6A19;
+   */
+	lineto( x, y ) {
+		if( this._scalable ) {
+			var xx = (x - this.scaleLeft) * this.canvas.width / this.scaleWidth * this._dir_x;
+			var yy = (y - this.scaleTop) * this.canvas.height / this.scaleHeight * this._dir_y;
+		} else {
+			var xx1 = x1;
+			var yy1 = y1;
+		}
+		this._context.lineTo( xx, yy );
+	}
+
+  /**
+   * &#x63CF;&#x753B;&#x958B;&#x59CB;&#x6642;&#x306E;&#x5BA3;&#x8A00;&#xFF0E;&#x6700;&#x521D;&#x306B;beginPath&#x3092;&#x547C;&#x3073;&#xFF0C;&#x6700;&#x5F8C;&#x306B;stroke&#x304B;fill&#x3092;&#x547C;&#x3076;
+   */
+  beginPath() {
+    this._context.beginPath();
+  }
+
+  /**
+   * &#x7DDA;&#x63CF;&#x753B;
+   */
+  stroke() {
+    this._context.stroke();
+  }
+
+  /**
+   * &#x5857;&#x308A;&#x3064;&#x3076;&#x3057;&#x63CF;&#x753B;
+   */
+  fill() {
+    this._context.fill();
+  }
+
+  /**
+   * &#x63CF;&#x753B;&#x9818;&#x57DF;&#x306E;&#x30AF;&#x30EA;&#x30A2;
+   */
+  cls() {
+		this._context.beginPath();
+		this._context.clearRect( 0, 0, this._canvas.width, this._canvas.height );
+		this._context.fill();
+	}
+
+  /**
+   * &#x70B9;&#x3092;&#x63CF;&#x753B;&#x3059;&#x308B;
+   *
+   * @param { number } x &#x70B9;&#x306E;X&#x5EA7;&#x6A19;
+   * @param { number } y &#x70B9;&#x306E;Y&#x5EA7;&#x6A19;
+   */
+  pset( x, y ) {
+		if( this._scalable ) {
+			var xx = (x - this._scaleLeft) * this._canvas.width / this._scaleWidth * this._dir_x;
+			var yy = (y - this._scaleTop) * this._canvas.height / this._scaleHeight * this._dir_y;
+		} else {
+			var xx = x;
+			var yy = y;
+		}
+		this._context.moveTo( xx, yy );
+		this._context.lineTo( xx+1, yy+1 );
+	}
+
+  /**
+   * &#x5186;&#x3092;&#x63CF;&#x753B;&#x3059;&#x308B;
+   *
+   * @param { number } x &#x5186;&#x306E;&#x4E2D;&#x5FC3;&#x306E;X&#x5EA7;&#x6A19;
+   * @param { number } y &#x5186;&#x306E;&#x4E2D;&#x5FC3;&#x306E;Y&#x5EA7;&#x6A19;
+   * @param { number } radius &#x5186;&#x306E;&#x534A;&#x5F84;
+   */
+  circle( x, y, radius ) {
+		var xx = (x - this._scaleLeft) * this._canvas.width / this._scaleWidth * this._dir_x;
+		var yy = (y - this._scaleTop) * this._canvas.height / this._scaleHeight * this._dir_y;
+		this._context.moveTo( xx+radius, yy );
+		this._context.arc( xx, yy, radius, 0, Math.PI*2, false);
+	}
+
+  /**
+   * &#x9577;&#x65B9;&#x5F62;&#x3092;&#x63CF;&#x753B;&#x3059;&#x308B;
+   *
+   * @param { number } x1 &#x9577;&#x65B9;&#x5F62;&#x306E;1&#x3064;&#x306E;&#x9802;&#x70B9;&#x306E;X&#x5EA7;&#x6A19;
+   * @param { number } y1 &#x540C;&#x3058;&#x9802;&#x70B9;&#x306E;Y&#x5EA7;&#x6A19;
+   * @param { number } x2 &#x4E0A;&#x8A18;&#x306E;&#x9802;&#x70B9;&#x306E;&#x5BFE;&#x89D2;&#x306E;&#x9802;&#x70B9;&#x306E;X&#x5EA7;&#x6A19;
+   * @param { number } y2 &#x540C;&#x3058;&#x9802;&#x70B9;&#x306E;Y&#x5EA7;&#x6A19;
+   */
+  rect( x1, y1, x2, y2 ) {
+    // &#x9577;&#x65B9;&#x5F62;&#x3092;&#x63CF;&#x753B;
+		var xx1 = (x1 - this.scaleLeft) * this._canvas.width / this._scaleWidth * this._dir_x;
+		var yy1 = (y1 - this.scaleTop) * this._canvas.height / this._scaleHeight * this._dir_y;
+		var xx2 = (x2 - this.scaleLeft) * this._canvas.width / this._scaleWidth * this._dir_x;
+		var yy2 = (y2 - this.scaleTop) * this._canvas.height / this._scaleHeight * this._dir_y;
+
+		this._context.fillRect( xx1, yy1, xx2-xx1, yy2-yy1 );
+	}
+
+  /**
+   * &#x6587;&#x5B57;&#x5217;&#x3092;&#x63CF;&#x753B;&#x3059;&#x308B;
+   *
+   * @param { number } x &#x6587;&#x5B57;&#x3092;&#x63CF;&#x753B;&#x3059;&#x308B;X&#x5EA7;&#x6A19;
+   * @param { number } y &#x6587;&#x5B57;&#x3092;&#x63CF;&#x753B;&#x3059;&#x308B;Y&#x5EA7;&#x6A19;
+   * @param { string } str &#x6587;&#x5B57;&#x5217;
+   */
+  print( x, y, str ) {
+		if( this._scalable ) {
+			var xx = (x - this._scaleLeft) * this._canvas.width / this._scaleWidth * this._dir_x;
+			var yy = (y - this._scaleTop) * this._canvas.height / this._scaleHeight * this._dir_y;
+		} else {
+			var xx = x;
+			var yy = y;
+		}
+		this._context.fillText( str, xx, yy );
+	}
+}
+</code></pre>
+
+</div>
+
+<footer class="footer">
+  Generated by <a href="https://esdoc.org">ESDoc<span data-ice="esdocVersion">(0.4.7)</span></a>
+</footer>
+
+<script src="script/search_index.js"></script>
+<script src="script/search.js"></script>
+<script src="script/pretty-print.js"></script>
+<script src="script/inherited-summary.js"></script>
+<script src="script/test-summary.js"></script>
+<script src="script/inner-link.js"></script>
+<script src="script/patch-for-local.js"></script>
+</body>
+</html>

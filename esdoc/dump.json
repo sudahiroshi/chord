@@ -1,0 +1,2701 @@
+[
+  {
+    "__docId__": 0,
+    "kind": "file",
+    "static": true,
+    "variation": null,
+    "name": "js/chord.js",
+    "memberof": null,
+    "longname": "js/chord.js",
+    "access": null,
+    "description": null,
+    "lineNumber": 5,
+    "content": "/**\n * @public\n * 音を再生するための裏方を取り仕切るクラス\n */\nclass SoundGenerator {\n  /**\n   * コンストラクタでAudioContextを初期化する\n   */\n  constructor() {\n    this.context = new AudioContext();\n    this.osc = null;\n    this._playing = false;\n  }\n\n  /**\n   * 任意の周波数の音を鳴らす\n   * @param { number } freq 周波数\n   * @param { number } gain 音量（0〜1）\n   */\n  start( freq, gain ) {\n    if( this._playing == false ) {\n      var osc = this.context.createOscillator();\n      var gn = this.context.createGain();\n      gn.gain.value = gain * 0.5;\n\n      osc.frequency.value = freq;\n      osc.connect( gn );\n      gn.connect( this.context.destination );\n      this.osc = osc;\n      osc.start();\n      this._playing = true;\n    }\n  }\n\n  /**\n   * 音を止める\n   */\n  stop() {\n    if( this._playing == true ) {\n      this.osc.stop();\n      this._playing = false;\n    }\n  }\n\n}\n\nclass chord {\n  constructor( vc1, vc2 ) {\n    this.sg0 = new SoundGenerator();\n    this.sg1 = new SoundGenerator();\n    this.sg2 = new SoundGenerator();\n    this._palying = true;\n\n    vc1.scale( 350, -30, 630, 40 );\n    vc2.scale( 350, -30, 630, 70 );\n    var nl = new nylon();\n\n    // Upper Graph\n    nl.on( \"chord\", ( key, params ) => {\n      vc1.cls();\n      vc1.forecolor( 200, 0, 0 );\n      vc1.drawWidth( 2 );\n      vc1.beginPath();\n      vc1.circle( params[\"freq\"], 0, 5 );\n      vc1.circle( params[\"freq\"] * params[\"waves\"][1][\"ratio\"], 0, 5 );\n      vc1.circle( params[\"freq\"] * params[\"waves\"][2][\"ratio\"], 0, 5 );\n      vc1.stroke();\n    });\n\n    // Lower Graph\n    nl.on( \"chord\", ( key, params ) => {\n      vc2.cls();\n      vc2.forecolor( 200, 0, 0 );\n      vc2.drawWidth( 2 );\n      vc2.beginPath();\n      var f0 = params[\"freq\"];\n      var f1 = params[\"freq\"] * params[\"waves\"][1][\"ratio\"];\n      var f2 = params[\"freq\"] * params[\"waves\"][2][\"ratio\"];\n      vc2.circle( f0, 0, 5 );\n      vc2.circle( f1, 0, 5 );\n      vc2.circle( f2, 0, 5 );\n      vc2.stroke();\n\n      vc2.setFont( \"20px sans-serif\" );\n      vc2.forecolor( 0, 0, 0 );\n      vc2.beginPath();\n      vc2.print( f0-20, -15, Math.floor(f0) + \"Hz\" );\n      vc2.print( f1-20, -15, Math.floor(f1) + \"Hz\" );\n      vc2.print( f2-20, -15, Math.floor(f2) + \"Hz\" );\n      vc2.stroke();\n    });\n\n    // sound on\n    nl.on( \"chord\", ( key, params ) => {\n      if( this._playing == true ) {\n        this.sg0.stop();\n        this.sg1.stop();\n        this.sg2.stop();\n      }\n      var f0 = params[\"freq\"];\n      var f1 = params[\"freq\"] * params[\"waves\"][1][\"ratio\"];\n      var f2 = params[\"freq\"] * params[\"waves\"][2][\"ratio\"];\n\n      var v0 = params[\"waves\"][0][\"amp\"];\n      var v1 = params[\"waves\"][1][\"amp\"];\n      var v2 = params[\"waves\"][2][\"amp\"];\n\n      this.sg0.start( f0, v0 );\n      this.sg1.start( f1, v1 );\n      this.sg2.start( f2, v2 );\n\n      this._playing = true;\n    });\n\n    // sound off\n    nl.on( \"stop\", ( key, params ) => {\n      if( this._playing == true ) {\n        this.sg0.stop();\n        this.sg1.stop();\n        this.sg2.stop();\n      }\n      this._playing = false;\n    });\n\n    // display difference\n    nl.on( \"chord\", ( key, params ) => {\n      var f0 = params[\"freq\"];\n      var f1 = params[\"freq\"] * params[\"waves\"][1][\"ratio\"];\n      var f2 = params[\"freq\"] * params[\"waves\"][2][\"ratio\"];\n\n      var v0 = params[\"freq\"] * params[\"waves\"][0][\"amp\"];\n      var v1 = params[\"freq\"] * params[\"waves\"][1][\"amp\"];\n      var v2 = params[\"freq\"] * params[\"waves\"][2][\"amp\"];\n\n      document.getElementById( 'result1' ).innerHTML = Math.abs( Math.floor( f1 - v1 ) ) + \"Hz\";\n      document.getElementById( 'result2' ).innerHTML = Math.abs( Math.floor( f2 - v2 ) ) + \"Hz\";\n    });\n  }\n}\n\nclass Graph2 {\n  background() {\n    this.vc.lineWidth( 3 );\n    this.vc.forecolor( 47, 81, 115 );\n    this.vc.beginPath();\n    this.vc.line( 400, 0, 900, 0 );\n    for( var i=440; i<=880; i+=440/12 )\n      this.vc.line( i, -10, i, 10 );\n    this.vc.stroke();\n\n    this.vc.forecolor( 0, 0, 0 );\n    this.vc.setFont( \"18px sans-serif\" );\n    this.vc.beginPath();\n    var name = { \"c\":440, \"d\":513, \"e\":586, \"f\":623, \"g\":697, \"a\":770, \"b\":843}\n    for( var tone in name )\n    {\n      this.vc.print( name[tone]-5, 20, tone );\n      console.log( \"freq:\" + name[tone] + \"Hz = \" + tone );\n    }\n    this.vc.setFont( \"24px sans-serif\" );\n    this.vc.print( 580, 35, \"12 tone tempeament\" );\n    this.vc.stroke();\n  }\n\n  // VCanvas vc\n\tconstructor( vc ) {\n\t\tthis.vc = vc;\n    this.vc.scale( 350, -30, 630, 70 );\n\n    this.background();\n\t}\n}\n\nclass Graph1 {\n  background() {\n    this.vc.lineWidth( 3 );\n    this.vc.forecolor( 169, 91, 2 );\n    this.vc.beginPath();\n    this.vc.line( 400, 0, 900, 0 );\n    for( var i=440; i<=880; i+=44 )\n      this.vc.line( i, -5, i, 5 );\n    this.vc.stroke();\n\n    this.vc.forecolor( 0, 0, 0 );\n    this.vc.setFont( \"18px sans-serif\" );\n    this.vc.beginPath();\n    for( var i=440; i<=880; i+=44 )\n      this.vc.print( i-10, -10, i/440 );\n    this.vc.setFont( \"20px sans-serif\" );\n    this.vc.print( 620, -22, \"one octave\" );\n    this.vc.print( 840, -18, \"frequency ratio\" );\n    this.vc.stroke();\n  }\n\n  // VCanvas vc1\n\tconstructor( vc ) {\n\t\tthis.vc = vc;\n\t\t//this.vc.scale( 0.787, -9.85, 1.44, 16.04 );\n    this.vc.scale( 350, -30, 630, 40 );\n\n    this.background();\n\n\t\tvar nl = new nylon();\n    nl.on( \"chord\", ( key, params ) => {\n      console.log( params );\n    })\n\t}\n}\n\nvar guisetup = ( nl ) => {\n  document.getElementById(\"b11\").addEventListener( \"click\", () => {\n    nl.emit( \"chord\", { \"freq\":440, waves:[{\"ratio\":1,\"amp\":1}, {\"ratio\":4/3,\"amp\":4/3}, {\"ratio\":5/3, \"amp\":5/3}] } );\n  });\n  document.getElementById(\"b12\").addEventListener( \"click\", () => {\n    nl.emit( \"chord\", { \"freq\":440, waves:[{\"ratio\":1, \"amp\":1}, {\"ratio\":5/4, \"amp\":5/4}, {\"ratio\":6/4,\"amp\":6/4}] });\n  });\n  document.getElementById(\"b13\").addEventListener( \"click\", () => {\n    nl.emit( \"chord\", { \"freq\":440, waves:[{\"ratio\":1, \"amp\":1}, {\"ratio\":6/5, \"amp\":6/5}, {\"ratio\":7/5,\"amp\":7/5}] });\n  });\n  document.getElementById(\"b14\").addEventListener( \"click\", () => {\n    nl.emit( \"chord\", { \"freq\":440, waves:[{\"ratio\":1, \"amp\":1}, {\"ratio\":7/6, \"amp\":7/6}, {\"ratio\":8/6,\"amp\":8/6}] });\n  });\n  document.getElementById(\"b15\").addEventListener( \"click\", () => {\n    nl.emit( \"chord\", { \"freq\":440, waves:[{\"ratio\":1, \"amp\":1}, {\"ratio\":7/5, \"amp\":7/5}, {\"ratio\":9/5,\"amp\":9/5}] });\n  });\n  document.getElementById(\"b16\").addEventListener( \"click\", () => {\n    nl.emit( \"chord\", { \"freq\":440, waves:[{\"ratio\":1, \"amp\":1}, {\"ratio\":8/6, \"amp\":8/6}, {\"ratio\":9/6,\"amp\":9/6}] });\n  });\n  document.getElementById(\"b21\").addEventListener( \"click\", () => {\n    nl.emit( \"chord\", { \"freq\":440, waves:[{\"ratio\":1, \"amp\":1}, {\"ratio\":1.335, \"amp\":4/3}, {\"ratio\":1.682,\"amp\":5/3}] });\n  });\n  document.getElementById(\"b22\").addEventListener( \"click\", () => {\n    nl.emit( \"chord\", { \"freq\":440, waves:[{\"ratio\":1, \"amp\":1}, {\"ratio\":1.26, \"amp\":5/4}, {\"ratio\":1.498,\"amp\":6/4}] });\n  });\n  document.getElementById(\"b23\").addEventListener( \"click\", () => {\n    nl.emit( \"chord\", { \"freq\":440, waves:[{\"ratio\":1, \"amp\":1}, {\"ratio\":1.189, \"amp\":6/5}, {\"ratio\":1.414,\"amp\":7/5}] });\n  });\n  document.getElementById(\"b24\").addEventListener( \"click\", () => {\n    nl.emit( \"chord\", { \"freq\":440, waves:[{\"ratio\":1, \"amp\":1}, {\"ratio\":1.189, \"amp\":7/6}, {\"ratio\":1.335,\"amp\":8/6}] });\n  });\n  document.getElementById(\"b25\").addEventListener( \"click\", () => {\n    nl.emit( \"chord\", { \"freq\":440, waves:[{\"ratio\":1, \"amp\":1}, {\"ratio\":1.414, \"amp\":7/5}, {\"ratio\":1.782,\"amp\":9/5}] });\n  });\n  document.getElementById(\"b26\").addEventListener( \"click\", () => {\n    nl.emit( \"chord\", { \"freq\":440, waves:[{\"ratio\":1, \"amp\":1}, {\"ratio\":1.335, \"amp\":8/6}, {\"ratio\":1.498,\"amp\":9/6}] });\n  });\n  document.getElementById(\"stop\").addEventListener( \"click\", () => {\n    nl.emit( \"stop\" );\n  });\n}\nwindow.addEventListener(\"load\", function(e) {\n  var nl = new nylon();\n  guisetup( nl );\n  var vcb1 = new VCanvas( document.getElementById('graphback1') );\n  new Graph1( vcb1 );\n\n  var vcb2 = new VCanvas( document.getElementById('graphback2') );\n  new Graph2( vcb2 );\n\n  var vc1 = new VCanvas( document.getElementById('graph1') );\n  var vc2 = new VCanvas( document.getElementById('graph2') );\n\n  var mychord = new chord( vc1, vc2 );\n});\n"
+  },
+  {
+    "__docId__": 1,
+    "kind": "class",
+    "static": true,
+    "variation": null,
+    "name": "SoundGenerator",
+    "memberof": "js/chord.js",
+    "longname": "js/chord.js~SoundGenerator",
+    "access": "public",
+    "export": false,
+    "importPath": "chord/js/chord.js",
+    "importStyle": null,
+    "description": "",
+    "lineNumber": 5,
+    "interface": false
+  },
+  {
+    "__docId__": 2,
+    "kind": "constructor",
+    "static": false,
+    "variation": null,
+    "name": "constructor",
+    "memberof": "js/chord.js~SoundGenerator",
+    "longname": "js/chord.js~SoundGenerator#constructor",
+    "access": null,
+    "description": "コンストラクタでAudioContextを初期化する",
+    "lineNumber": 9,
+    "params": [],
+    "generator": false
+  },
+  {
+    "__docId__": 3,
+    "kind": "member",
+    "static": false,
+    "variation": null,
+    "name": "context",
+    "memberof": "js/chord.js~SoundGenerator",
+    "longname": "js/chord.js~SoundGenerator#context",
+    "access": null,
+    "description": null,
+    "lineNumber": 10,
+    "undocument": true,
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 4,
+    "kind": "member",
+    "static": false,
+    "variation": null,
+    "name": "osc",
+    "memberof": "js/chord.js~SoundGenerator",
+    "longname": "js/chord.js~SoundGenerator#osc",
+    "access": null,
+    "description": null,
+    "lineNumber": 11,
+    "undocument": true,
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 5,
+    "kind": "member",
+    "static": false,
+    "variation": null,
+    "name": "_playing",
+    "memberof": "js/chord.js~SoundGenerator",
+    "longname": "js/chord.js~SoundGenerator#_playing",
+    "access": null,
+    "description": null,
+    "lineNumber": 12,
+    "undocument": true,
+    "type": {
+      "types": [
+        "boolean"
+      ]
+    }
+  },
+  {
+    "__docId__": 6,
+    "kind": "method",
+    "static": false,
+    "variation": null,
+    "name": "start",
+    "memberof": "js/chord.js~SoundGenerator",
+    "longname": "js/chord.js~SoundGenerator#start",
+    "access": null,
+    "description": "任意の周波数の音を鳴らす",
+    "lineNumber": 20,
+    "params": [
+      {
+        "nullable": null,
+        "types": [
+          " number "
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "freq",
+        "description": "周波数"
+      },
+      {
+        "nullable": null,
+        "types": [
+          " number "
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "gain",
+        "description": "音量（0〜1）"
+      }
+    ],
+    "generator": false
+  },
+  {
+    "__docId__": 7,
+    "kind": "member",
+    "static": false,
+    "variation": null,
+    "name": "osc",
+    "memberof": "js/chord.js~SoundGenerator",
+    "longname": "js/chord.js~SoundGenerator#osc",
+    "access": null,
+    "description": null,
+    "lineNumber": 29,
+    "undocument": true,
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 8,
+    "kind": "member",
+    "static": false,
+    "variation": null,
+    "name": "_playing",
+    "memberof": "js/chord.js~SoundGenerator",
+    "longname": "js/chord.js~SoundGenerator#_playing",
+    "access": null,
+    "description": null,
+    "lineNumber": 31,
+    "undocument": true,
+    "type": {
+      "types": [
+        "boolean"
+      ]
+    }
+  },
+  {
+    "__docId__": 9,
+    "kind": "method",
+    "static": false,
+    "variation": null,
+    "name": "stop",
+    "memberof": "js/chord.js~SoundGenerator",
+    "longname": "js/chord.js~SoundGenerator#stop",
+    "access": null,
+    "description": "音を止める",
+    "lineNumber": 38,
+    "params": [],
+    "generator": false
+  },
+  {
+    "__docId__": 10,
+    "kind": "member",
+    "static": false,
+    "variation": null,
+    "name": "_playing",
+    "memberof": "js/chord.js~SoundGenerator",
+    "longname": "js/chord.js~SoundGenerator#_playing",
+    "access": null,
+    "description": null,
+    "lineNumber": 41,
+    "undocument": true,
+    "type": {
+      "types": [
+        "boolean"
+      ]
+    }
+  },
+  {
+    "__docId__": 11,
+    "kind": "class",
+    "static": true,
+    "variation": null,
+    "name": "chord",
+    "memberof": "js/chord.js",
+    "longname": "js/chord.js~chord",
+    "access": null,
+    "export": false,
+    "importPath": "chord/js/chord.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 47,
+    "undocument": true,
+    "interface": false
+  },
+  {
+    "__docId__": 12,
+    "kind": "constructor",
+    "static": false,
+    "variation": null,
+    "name": "constructor",
+    "memberof": "js/chord.js~chord",
+    "longname": "js/chord.js~chord#constructor",
+    "access": null,
+    "description": null,
+    "lineNumber": 48,
+    "undocument": true,
+    "params": [
+      {
+        "name": "vc1",
+        "types": [
+          "*"
+        ]
+      },
+      {
+        "name": "vc2",
+        "types": [
+          "*"
+        ]
+      }
+    ],
+    "generator": false
+  },
+  {
+    "__docId__": 13,
+    "kind": "member",
+    "static": false,
+    "variation": null,
+    "name": "sg0",
+    "memberof": "js/chord.js~chord",
+    "longname": "js/chord.js~chord#sg0",
+    "access": null,
+    "description": null,
+    "lineNumber": 49,
+    "undocument": true,
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 14,
+    "kind": "member",
+    "static": false,
+    "variation": null,
+    "name": "sg1",
+    "memberof": "js/chord.js~chord",
+    "longname": "js/chord.js~chord#sg1",
+    "access": null,
+    "description": null,
+    "lineNumber": 50,
+    "undocument": true,
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 15,
+    "kind": "member",
+    "static": false,
+    "variation": null,
+    "name": "sg2",
+    "memberof": "js/chord.js~chord",
+    "longname": "js/chord.js~chord#sg2",
+    "access": null,
+    "description": null,
+    "lineNumber": 51,
+    "undocument": true,
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 16,
+    "kind": "member",
+    "static": false,
+    "variation": null,
+    "name": "_palying",
+    "memberof": "js/chord.js~chord",
+    "longname": "js/chord.js~chord#_palying",
+    "access": null,
+    "description": null,
+    "lineNumber": 52,
+    "undocument": true,
+    "type": {
+      "types": [
+        "boolean"
+      ]
+    }
+  },
+  {
+    "__docId__": 17,
+    "kind": "member",
+    "static": false,
+    "variation": null,
+    "name": "_playing",
+    "memberof": "js/chord.js~chord",
+    "longname": "js/chord.js~chord#_playing",
+    "access": null,
+    "description": null,
+    "lineNumber": 112,
+    "undocument": true,
+    "type": {
+      "types": [
+        "boolean"
+      ]
+    }
+  },
+  {
+    "__docId__": 18,
+    "kind": "member",
+    "static": false,
+    "variation": null,
+    "name": "_playing",
+    "memberof": "js/chord.js~chord",
+    "longname": "js/chord.js~chord#_playing",
+    "access": null,
+    "description": null,
+    "lineNumber": 122,
+    "undocument": true,
+    "type": {
+      "types": [
+        "boolean"
+      ]
+    }
+  },
+  {
+    "__docId__": 19,
+    "kind": "class",
+    "static": true,
+    "variation": null,
+    "name": "Graph2",
+    "memberof": "js/chord.js",
+    "longname": "js/chord.js~Graph2",
+    "access": null,
+    "export": false,
+    "importPath": "chord/js/chord.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 141,
+    "undocument": true,
+    "interface": false
+  },
+  {
+    "__docId__": 20,
+    "kind": "method",
+    "static": false,
+    "variation": null,
+    "name": "background",
+    "memberof": "js/chord.js~Graph2",
+    "longname": "js/chord.js~Graph2#background",
+    "access": null,
+    "description": null,
+    "lineNumber": 142,
+    "undocument": true,
+    "params": [],
+    "generator": false
+  },
+  {
+    "__docId__": 21,
+    "kind": "constructor",
+    "static": false,
+    "variation": null,
+    "name": "constructor",
+    "memberof": "js/chord.js~Graph2",
+    "longname": "js/chord.js~Graph2#constructor",
+    "access": null,
+    "description": null,
+    "lineNumber": 166,
+    "undocument": true,
+    "params": [
+      {
+        "name": "vc",
+        "types": [
+          "*"
+        ]
+      }
+    ],
+    "generator": false
+  },
+  {
+    "__docId__": 22,
+    "kind": "member",
+    "static": false,
+    "variation": null,
+    "name": "vc",
+    "memberof": "js/chord.js~Graph2",
+    "longname": "js/chord.js~Graph2#vc",
+    "access": null,
+    "description": null,
+    "lineNumber": 167,
+    "undocument": true,
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 23,
+    "kind": "class",
+    "static": true,
+    "variation": null,
+    "name": "Graph1",
+    "memberof": "js/chord.js",
+    "longname": "js/chord.js~Graph1",
+    "access": null,
+    "export": false,
+    "importPath": "chord/js/chord.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 174,
+    "undocument": true,
+    "interface": false
+  },
+  {
+    "__docId__": 24,
+    "kind": "method",
+    "static": false,
+    "variation": null,
+    "name": "background",
+    "memberof": "js/chord.js~Graph1",
+    "longname": "js/chord.js~Graph1#background",
+    "access": null,
+    "description": null,
+    "lineNumber": 175,
+    "undocument": true,
+    "params": [],
+    "generator": false
+  },
+  {
+    "__docId__": 25,
+    "kind": "constructor",
+    "static": false,
+    "variation": null,
+    "name": "constructor",
+    "memberof": "js/chord.js~Graph1",
+    "longname": "js/chord.js~Graph1#constructor",
+    "access": null,
+    "description": null,
+    "lineNumber": 196,
+    "undocument": true,
+    "params": [
+      {
+        "name": "vc",
+        "types": [
+          "*"
+        ]
+      }
+    ],
+    "generator": false
+  },
+  {
+    "__docId__": 26,
+    "kind": "member",
+    "static": false,
+    "variation": null,
+    "name": "vc",
+    "memberof": "js/chord.js~Graph1",
+    "longname": "js/chord.js~Graph1#vc",
+    "access": null,
+    "description": null,
+    "lineNumber": 197,
+    "undocument": true,
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 27,
+    "kind": "variable",
+    "static": true,
+    "variation": null,
+    "name": "guisetup",
+    "memberof": "js/chord.js",
+    "longname": "js/chord.js~guisetup",
+    "access": null,
+    "export": false,
+    "importPath": "chord/js/chord.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 210,
+    "undocument": true,
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 28,
+    "kind": "file",
+    "static": true,
+    "variation": null,
+    "name": "js/nylon.js",
+    "memberof": null,
+    "longname": "js/nylon.js",
+    "access": null,
+    "description": null,
+    "lineNumber": 6,
+    "content": "\n/**\n * クライアント側nylonの本体\n * nylon関係の機能を使う場合は必ず読み込んでください\n */\nclass nylon {\n\n\t/**\n\t * constructor\n\t * グローバル変数nylon，nylon.mapなどを初期化します\n\t */\n\tconstructor() {\n\t\t/**\n\t\t * @type {hash}\n\t\t */\n\t\tthis.nylon = window.nylon;\n\n\t\t/**\n\t\t * @type {window}\n\t\t */\n\t\tthis.parent = window.parent;\n\n\t\tif( window.nylon == null ) {\n\t\t\twindow.nylon = {};\n\t\t}\n\t\tif( window.nylon.map == null ) {\n\t\t\twindow.nylon.map = {};\n\t\t}\n\n\t\t/**\n\t\t * @type {array}\n\t\t */\n\t\tthis.map = window.nylon.map;\n\t}\n\n\t/**\n\t * 受け取ったイベント情報をそのまま外部に渡すための関数\n\t * nylon.iFrameで使用します\n\t * @param {function} fn - イベントを処理するコールバック関数\n\t */\n\tsetPassThrough( fn ) {\n\t\tif( window.nylon.passthrough == null ) {\n\t\t\twindow.nylon.passthrough = fn;\n\t\t} else {\n\t\t\tconsole.log( \"Error by duplexy registration\" );\n\t\t}\n\t}\n\n\t/**\n\t * キーワードと，キーワードに対する処理を登録する関数\n\t * @param { string } keyword - キーワード\n\t * @param { function } fn - コールバック関数\n\t */\n\ton( keyword, fn ) {\n\t\tconsole.log( this );\n\t\tif( this.map[ keyword ] == null ) {\n\t\t\t//if( window != parent ) {\n\t\t\t//\tthis.parent.postMessage( { \"keyword\": [\"on\"], \"params\": {\"keyword\": [\"on\"], \"key\":keyword}}, nylon.origin );\n\t\t\t//}\n\t\t\tconsole.log( \"new keyword : \" + keyword );\n\t\t\tthis.map[ keyword ] = [ new nylonfunc( fn, this ) ];\n\t\t} else {\n\t\t\tthis.map[ keyword ].push( new nylonfunc( fn, this ) );\n\t\t}\n\t}\n\n\t/**\n\t * イベントを起こす関数\n\t * @param { string[] } keys - キーワードの配列\n\t * @param { hash } params - パラメータ（ハッシュで与える）\n\t */\n\temitByArray( keys, params ) {\n\t\tif( window.nylon.passthrough != null ) {\n\t\t\twindow.nylon.passthrough( keys, params, this );\n\t\t}\n\t\tif( params == null ) {\n\t\t\tparams = {};\n\t\t}\n\t\tconsole.log( \"-->\" + params[\"keywords\"] );\n\n\t\tif( params[\"keywords\"] == null ) {\n\t\t\tconsole.log(\"params.keywordsがnull\");\n\t\t\tparams[\"keywords\"] = keys;\n\t\t}\n\n\t\tfor( let key of keys ) {\n\t\t\tif( this.map[ key ] == null ) {\n\t\t\t\tconsole.log( \"Invarid keyword \" + key );\n\t\t\t} else {\n\t\t\t\tfor( let element of this.map[ key ] ) {\n\t\t\t\t\t//console.log( element );\n\t\t\t\t\t//console.log( \"-->\" + element.obj );\n\t\t\t\t\tif( element.obj != this ) {\n\t\t\t\t\t\telement.fn( key, params );\n\t\t\t\t\t}\n\t\t\t\t}\n\t\t\t}\n\t\t}\n\t}\n\n\t/**\n\t * イベントを起こす関数\n\t * @param { string } keyword - キーワード．|で区切ることで複数キーワードを与える\n\t * @param { hash } params - パラメータ（ハッシュで与える）\n\t */\n\temit( keyword, params ) {\n\t\tvar keys = keyword.split( \"|\" );\n\t\tthis.emitByArray( keys, params );\n\t}\n}\n\n//export default nylon;\n//exports = module.exports = nylon;\n\n/**\n * nylonに登録する関数のクラス\n */\nclass nylonfunc {\n\n\t/**\n\t * コンストラクタ\n\t * @param { function } func - コールバック関数\n\t * @param { nylon } object - nylonオブジェクト\n\t */\n\tconstructor( func, object ) {\n\t\t/** @type { function } */\n\t\tthis.fn = func;\n\t\t/** @type { nylon } */\n\t\tthis.obj = object;\n\t}\n}\n//export default nylonfunc;\n"
+  },
+  {
+    "__docId__": 29,
+    "kind": "class",
+    "static": true,
+    "variation": null,
+    "name": "nylon",
+    "memberof": "js/nylon.js",
+    "longname": "js/nylon.js~nylon",
+    "access": null,
+    "export": false,
+    "importPath": "chord/js/nylon.js",
+    "importStyle": null,
+    "description": "クライアント側nylonの本体\nnylon関係の機能を使う場合は必ず読み込んでください",
+    "lineNumber": 6,
+    "interface": false
+  },
+  {
+    "__docId__": 30,
+    "kind": "constructor",
+    "static": false,
+    "variation": null,
+    "name": "constructor",
+    "memberof": "js/nylon.js~nylon",
+    "longname": "js/nylon.js~nylon#constructor",
+    "access": null,
+    "description": "constructor\nグローバル変数nylon，nylon.mapなどを初期化します",
+    "lineNumber": 12,
+    "params": [],
+    "generator": false
+  },
+  {
+    "__docId__": 31,
+    "kind": "member",
+    "static": false,
+    "variation": null,
+    "name": "nylon",
+    "memberof": "js/nylon.js~nylon",
+    "longname": "js/nylon.js~nylon#nylon",
+    "access": null,
+    "description": "",
+    "lineNumber": 16,
+    "type": {
+      "nullable": null,
+      "types": [
+        "hash"
+      ],
+      "spread": false,
+      "description": null
+    }
+  },
+  {
+    "__docId__": 32,
+    "kind": "member",
+    "static": false,
+    "variation": null,
+    "name": "parent",
+    "memberof": "js/nylon.js~nylon",
+    "longname": "js/nylon.js~nylon#parent",
+    "access": null,
+    "description": "",
+    "lineNumber": 21,
+    "type": {
+      "nullable": null,
+      "types": [
+        "window"
+      ],
+      "spread": false,
+      "description": null
+    }
+  },
+  {
+    "__docId__": 33,
+    "kind": "member",
+    "static": false,
+    "variation": null,
+    "name": "map",
+    "memberof": "js/nylon.js~nylon",
+    "longname": "js/nylon.js~nylon#map",
+    "access": null,
+    "description": "",
+    "lineNumber": 33,
+    "type": {
+      "nullable": null,
+      "types": [
+        "array"
+      ],
+      "spread": false,
+      "description": null
+    }
+  },
+  {
+    "__docId__": 34,
+    "kind": "method",
+    "static": false,
+    "variation": null,
+    "name": "setPassThrough",
+    "memberof": "js/nylon.js~nylon",
+    "longname": "js/nylon.js~nylon#setPassThrough",
+    "access": null,
+    "description": "受け取ったイベント情報をそのまま外部に渡すための関数\nnylon.iFrameで使用します",
+    "lineNumber": 41,
+    "params": [
+      {
+        "nullable": null,
+        "types": [
+          "function"
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "fn",
+        "description": "イベントを処理するコールバック関数"
+      }
+    ],
+    "generator": false
+  },
+  {
+    "__docId__": 35,
+    "kind": "method",
+    "static": false,
+    "variation": null,
+    "name": "on",
+    "memberof": "js/nylon.js~nylon",
+    "longname": "js/nylon.js~nylon#on",
+    "access": null,
+    "description": "キーワードと，キーワードに対する処理を登録する関数",
+    "lineNumber": 54,
+    "params": [
+      {
+        "nullable": null,
+        "types": [
+          " string "
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "keyword",
+        "description": "キーワード"
+      },
+      {
+        "nullable": null,
+        "types": [
+          " function "
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "fn",
+        "description": "コールバック関数"
+      }
+    ],
+    "generator": false
+  },
+  {
+    "__docId__": 36,
+    "kind": "method",
+    "static": false,
+    "variation": null,
+    "name": "emitByArray",
+    "memberof": "js/nylon.js~nylon",
+    "longname": "js/nylon.js~nylon#emitByArray",
+    "access": null,
+    "description": "イベントを起こす関数",
+    "lineNumber": 72,
+    "params": [
+      {
+        "nullable": null,
+        "types": [
+          " string[] "
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "keys",
+        "description": "キーワードの配列"
+      },
+      {
+        "nullable": null,
+        "types": [
+          " hash "
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "params",
+        "description": "パラメータ（ハッシュで与える）"
+      }
+    ],
+    "generator": false
+  },
+  {
+    "__docId__": 37,
+    "kind": "method",
+    "static": false,
+    "variation": null,
+    "name": "emit",
+    "memberof": "js/nylon.js~nylon",
+    "longname": "js/nylon.js~nylon#emit",
+    "access": null,
+    "description": "イベントを起こす関数",
+    "lineNumber": 106,
+    "params": [
+      {
+        "nullable": null,
+        "types": [
+          " string "
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "keyword",
+        "description": "キーワード．|で区切ることで複数キーワードを与える"
+      },
+      {
+        "nullable": null,
+        "types": [
+          " hash "
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "params",
+        "description": "パラメータ（ハッシュで与える）"
+      }
+    ],
+    "generator": false
+  },
+  {
+    "__docId__": 38,
+    "kind": "class",
+    "static": true,
+    "variation": null,
+    "name": "nylonfunc",
+    "memberof": "js/nylon.js",
+    "longname": "js/nylon.js~nylonfunc",
+    "access": null,
+    "export": false,
+    "importPath": "chord/js/nylon.js",
+    "importStyle": null,
+    "description": "nylonに登録する関数のクラス",
+    "lineNumber": 118,
+    "interface": false
+  },
+  {
+    "__docId__": 39,
+    "kind": "constructor",
+    "static": false,
+    "variation": null,
+    "name": "constructor",
+    "memberof": "js/nylon.js~nylonfunc",
+    "longname": "js/nylon.js~nylonfunc#constructor",
+    "access": null,
+    "description": "コンストラクタ",
+    "lineNumber": 125,
+    "params": [
+      {
+        "nullable": null,
+        "types": [
+          " function "
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "func",
+        "description": "コールバック関数"
+      },
+      {
+        "nullable": null,
+        "types": [
+          " nylon "
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "object",
+        "description": "nylonオブジェクト"
+      }
+    ],
+    "generator": false
+  },
+  {
+    "__docId__": 40,
+    "kind": "member",
+    "static": false,
+    "variation": null,
+    "name": "fn",
+    "memberof": "js/nylon.js~nylonfunc",
+    "longname": "js/nylon.js~nylonfunc#fn",
+    "access": null,
+    "description": null,
+    "lineNumber": 127,
+    "type": {
+      "nullable": null,
+      "types": [
+        " function "
+      ],
+      "spread": false,
+      "description": null
+    }
+  },
+  {
+    "__docId__": 41,
+    "kind": "member",
+    "static": false,
+    "variation": null,
+    "name": "obj",
+    "memberof": "js/nylon.js~nylonfunc",
+    "longname": "js/nylon.js~nylonfunc#obj",
+    "access": null,
+    "description": null,
+    "lineNumber": 129,
+    "type": {
+      "nullable": null,
+      "types": [
+        " nylon "
+      ],
+      "spread": false,
+      "description": null
+    }
+  },
+  {
+    "__docId__": 42,
+    "kind": "file",
+    "static": true,
+    "variation": null,
+    "name": "js/vbtimer.js",
+    "memberof": null,
+    "longname": "js/vbtimer.js",
+    "access": null,
+    "description": null,
+    "lineNumber": 1,
+    "content": "class vbTimer {\n  constructor() {\n  \tthis.interval = 1000;\n  \tthis.enabled = false;\n  \tthis.timer = null;\n  \tthis._tHandle = null;\n  }\n\n\tenable() {\n\t\tif( (this.timer != null) && (this.enabled == false) ) {\n\t\t\tthis._tHandle = Timer.setInterval(this.timer, this.interval);\n\t\t\tthis.enabled = true;\n\t\t}\n\t}\n\tdisable() {\n\t\tif( this.enabled == true ) {\n\t\t\tTimer.clearInterval ( this._tHandle );\n\t\t\tthis.enabled = false;\n\t\t}\n\t}\n}\n"
+  },
+  {
+    "__docId__": 43,
+    "kind": "class",
+    "static": true,
+    "variation": null,
+    "name": "vbTimer",
+    "memberof": "js/vbtimer.js",
+    "longname": "js/vbtimer.js~vbTimer",
+    "access": null,
+    "export": false,
+    "importPath": "chord/js/vbtimer.js",
+    "importStyle": null,
+    "description": null,
+    "lineNumber": 1,
+    "undocument": true,
+    "interface": false
+  },
+  {
+    "__docId__": 44,
+    "kind": "constructor",
+    "static": false,
+    "variation": null,
+    "name": "constructor",
+    "memberof": "js/vbtimer.js~vbTimer",
+    "longname": "js/vbtimer.js~vbTimer#constructor",
+    "access": null,
+    "description": null,
+    "lineNumber": 2,
+    "undocument": true,
+    "params": [],
+    "generator": false
+  },
+  {
+    "__docId__": 45,
+    "kind": "member",
+    "static": false,
+    "variation": null,
+    "name": "interval",
+    "memberof": "js/vbtimer.js~vbTimer",
+    "longname": "js/vbtimer.js~vbTimer#interval",
+    "access": null,
+    "description": null,
+    "lineNumber": 3,
+    "undocument": true,
+    "type": {
+      "types": [
+        "number"
+      ]
+    }
+  },
+  {
+    "__docId__": 46,
+    "kind": "member",
+    "static": false,
+    "variation": null,
+    "name": "enabled",
+    "memberof": "js/vbtimer.js~vbTimer",
+    "longname": "js/vbtimer.js~vbTimer#enabled",
+    "access": null,
+    "description": null,
+    "lineNumber": 4,
+    "undocument": true,
+    "type": {
+      "types": [
+        "boolean"
+      ]
+    }
+  },
+  {
+    "__docId__": 47,
+    "kind": "member",
+    "static": false,
+    "variation": null,
+    "name": "timer",
+    "memberof": "js/vbtimer.js~vbTimer",
+    "longname": "js/vbtimer.js~vbTimer#timer",
+    "access": null,
+    "description": null,
+    "lineNumber": 5,
+    "undocument": true,
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 48,
+    "kind": "member",
+    "static": false,
+    "variation": null,
+    "name": "_tHandle",
+    "memberof": "js/vbtimer.js~vbTimer",
+    "longname": "js/vbtimer.js~vbTimer#_tHandle",
+    "access": null,
+    "description": null,
+    "lineNumber": 6,
+    "undocument": true,
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 49,
+    "kind": "method",
+    "static": false,
+    "variation": null,
+    "name": "enable",
+    "memberof": "js/vbtimer.js~vbTimer",
+    "longname": "js/vbtimer.js~vbTimer#enable",
+    "access": null,
+    "description": null,
+    "lineNumber": 9,
+    "undocument": true,
+    "params": [],
+    "generator": false
+  },
+  {
+    "__docId__": 50,
+    "kind": "member",
+    "static": false,
+    "variation": null,
+    "name": "_tHandle",
+    "memberof": "js/vbtimer.js~vbTimer",
+    "longname": "js/vbtimer.js~vbTimer#_tHandle",
+    "access": null,
+    "description": null,
+    "lineNumber": 11,
+    "undocument": true,
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 51,
+    "kind": "member",
+    "static": false,
+    "variation": null,
+    "name": "enabled",
+    "memberof": "js/vbtimer.js~vbTimer",
+    "longname": "js/vbtimer.js~vbTimer#enabled",
+    "access": null,
+    "description": null,
+    "lineNumber": 12,
+    "undocument": true,
+    "type": {
+      "types": [
+        "boolean"
+      ]
+    }
+  },
+  {
+    "__docId__": 52,
+    "kind": "method",
+    "static": false,
+    "variation": null,
+    "name": "disable",
+    "memberof": "js/vbtimer.js~vbTimer",
+    "longname": "js/vbtimer.js~vbTimer#disable",
+    "access": null,
+    "description": null,
+    "lineNumber": 15,
+    "undocument": true,
+    "params": [],
+    "generator": false
+  },
+  {
+    "__docId__": 53,
+    "kind": "member",
+    "static": false,
+    "variation": null,
+    "name": "enabled",
+    "memberof": "js/vbtimer.js~vbTimer",
+    "longname": "js/vbtimer.js~vbTimer#enabled",
+    "access": null,
+    "description": null,
+    "lineNumber": 18,
+    "undocument": true,
+    "type": {
+      "types": [
+        "boolean"
+      ]
+    }
+  },
+  {
+    "__docId__": 54,
+    "kind": "file",
+    "static": true,
+    "variation": null,
+    "name": "js/vcanvas.js",
+    "memberof": null,
+    "longname": "js/vcanvas.js",
+    "access": null,
+    "description": null,
+    "lineNumber": 5,
+    "content": "/**\n * @public\n * Canvas with virtual coordinate\n */\nclass VCanvas {\n\n  /**\n   * @param { HTMLCanvasElement } canvasElement HTMLのCanvas要素\n   */\n  constructor( canvasElement ) {\n    /** @private */\n    this._canvas = canvasElement;\n    this._context = this._canvas.getContext(\"2d\");\n    this._scaleWidth = null;\n    this._scaleHeight = null;\n    this._scaleTop = null;\n    this._slaceLeft = null;\n    this._scalable = false;\n    var _dir_x = 1; // X軸の向き\n    var _dir_y = 1; // Y軸の向き\n    var _color = [0,0,0,1]; // 色の初期値は黒\n  };\n\n  /**\n   * 仮想座標を設定する．\n   *\n   * @param { number } left 左端の座標\n   * @param { number } top 上端の座標\n   * @param { number } width 仮想座標の幅\n   * @param { number } height 仮想座標の高さ\n   */\n  scale( left, top, width, height ) {\n    this._scaleLeft = left;\n    this._scaleTop = top;\n    this._scaleWidth = width;\n    this._scaleHeight = height;\n    this._scalable = true;\n\n    if( this._scaleWidth < 0 ) {\n      this._scaleWidth = -this.scaleWidth;\n      this._dir_x = -1;\n    } else this._dir_x = 1;\n\n    if( this._scaleHeight < 0 ) {\n      this._scaleHeight = -this.scaleHeight;\n      this._dir_y = -1;\n    } else this._dir_y = 1;\n  };\n\n  /**\n   * 描画する際の色を設定する．\n   * パラメータr,g,bはいずれも0〜255，aは0〜1．\n   *\n   * @param { number } r 赤\n   * @param { number } g 緑\n   * @param { number } b 青\n   * @param { number } a 透明度\n   */\n  forecolor( r, g, b, a ) {\n    var alpha = a;\n    if( arguments.length == 3 ) alpha = 1\n\t\tthis._color = [ r, g, b, alpha ];\n\t\tthis._context.fillStyle = 'rgba(' + this._color.join(',').toString() + ')';\n\t\tthis._context.strokeStyle = 'rgba(' + this._color.join(',').toString() + ')';\n\t}\n\n  /**\n   * 線の太さを設定する．\n   * 単位はピクセル．\n   *\n   * @param { number } width 線の太さ\n   */\n  lineWidth( width ) {\n\t\tthis._context.lineWidth = width;\n\t}\n\n  /**\n   * 線の太さを設定する．\n   * lineWidthと同じ働き．\n   *\n   * @param { number} width 線の太さ\n   */\n\tdrawWidth( width ) {\n\t\tthis._context.lineWidth = width;\n\t}\n\n  /**\n   * フォントを設定する．\n   *\n   * @param { string } font フォント情報\n   */\n  setFont( font ) {\n\t\tthis._context.font = font;\n\t}\n\n  /**\n   * 線を描画する\n   *\n   * @param { number } x1 始点のX座標\n   * @param { number } y1 始点のY座標\n   * @param { number } x2 終点のX座標\n   * @param { number } y2 終点のX座標\n   */\n  line( x1, y1, x2, y2 ) {\n    if( this._scalable ) {\n\t\t\tvar xx1 = (x1 - this._scaleLeft) * this._canvas.width / this._scaleWidth * this._dir_x;\n\t\t\tvar xx2 = (x2 - this._scaleLeft) * this._canvas.width / this._scaleWidth * this._dir_x;\n\t\t\tvar yy1 = (y1 - this._scaleTop) * this._canvas.height / this._scaleHeight * this._dir_y;\n\t\t\tvar yy2 = (y2 - this._scaleTop) * this._canvas.height / this._scaleHeight * this._dir_y;\n\t\t} else {\n\t\t\tvar xx1 = x1;\n\t\t\tvar xx2 = x2;\n\t\t\tvar yy1 = y1;\n\t\t\tvar yy2 = y2;\n\t\t}\n\t\tthis._context.moveTo( xx1, yy1 );\n\t\tthis._context.lineTo( xx2, yy2 );\n  }\n\n  /**\n   * 連続的に線を描画する際の始点を設定する\n   *\n   * @param { number } x 始点のX座標\n   * @param { number } y 始点のY座標\n   */\n  lineStart( x, y ) {\n\t\tif( this._scalable ) {\n\t\t\tvar xx = (x - this._scaleLeft) * this._canvas.width / this._scaleWidth * this._dir_x;\n\t\t\tvar yy = (y - this._scaleTop) * this._canvas.height / this._scaleHeight * this._dir_y;\n\t\t} else {\n\t\t\tvar xx = x;\n\t\t\tvar yy = y;\n\t\t}\n\t\tthis._context.moveTo( xx, yy );\n\t}\n\n  /**\n   * 連続的に線を描画する．正確には直前に描画された座標から線を引く\n   *\n   * @param { number } x 終点のX座標\n   * @param { number } y 終点のY座標\n   */\n\tlineto( x, y ) {\n\t\tif( this._scalable ) {\n\t\t\tvar xx = (x - this.scaleLeft) * this.canvas.width / this.scaleWidth * this._dir_x;\n\t\t\tvar yy = (y - this.scaleTop) * this.canvas.height / this.scaleHeight * this._dir_y;\n\t\t} else {\n\t\t\tvar xx1 = x1;\n\t\t\tvar yy1 = y1;\n\t\t}\n\t\tthis._context.lineTo( xx, yy );\n\t}\n\n  /**\n   * 描画開始時の宣言．最初にbeginPathを呼び，最後にstrokeかfillを呼ぶ\n   */\n  beginPath() {\n    this._context.beginPath();\n  }\n\n  /**\n   * 線描画\n   */\n  stroke() {\n    this._context.stroke();\n  }\n\n  /**\n   * 塗りつぶし描画\n   */\n  fill() {\n    this._context.fill();\n  }\n\n  /**\n   * 描画領域のクリア\n   */\n  cls() {\n\t\tthis._context.beginPath();\n\t\tthis._context.clearRect( 0, 0, this._canvas.width, this._canvas.height );\n\t\tthis._context.fill();\n\t}\n\n  /**\n   * 点を描画する\n   *\n   * @param { number } x 点のX座標\n   * @param { number } y 点のY座標\n   */\n  pset( x, y ) {\n\t\tif( this._scalable ) {\n\t\t\tvar xx = (x - this._scaleLeft) * this._canvas.width / this._scaleWidth * this._dir_x;\n\t\t\tvar yy = (y - this._scaleTop) * this._canvas.height / this._scaleHeight * this._dir_y;\n\t\t} else {\n\t\t\tvar xx = x;\n\t\t\tvar yy = y;\n\t\t}\n\t\tthis._context.moveTo( xx, yy );\n\t\tthis._context.lineTo( xx+1, yy+1 );\n\t}\n\n  /**\n   * 円を描画する\n   *\n   * @param { number } x 円の中心のX座標\n   * @param { number } y 円の中心のY座標\n   * @param { number } radius 円の半径\n   */\n  circle( x, y, radius ) {\n\t\tvar xx = (x - this._scaleLeft) * this._canvas.width / this._scaleWidth * this._dir_x;\n\t\tvar yy = (y - this._scaleTop) * this._canvas.height / this._scaleHeight * this._dir_y;\n\t\tthis._context.moveTo( xx+radius, yy );\n\t\tthis._context.arc( xx, yy, radius, 0, Math.PI*2, false);\n\t}\n\n  /**\n   * 長方形を描画する\n   *\n   * @param { number } x1 長方形の1つの頂点のX座標\n   * @param { number } y1 同じ頂点のY座標\n   * @param { number } x2 上記の頂点の対角の頂点のX座標\n   * @param { number } y2 同じ頂点のY座標\n   */\n  rect( x1, y1, x2, y2 ) {\n    // 長方形を描画\n\t\tvar xx1 = (x1 - this.scaleLeft) * this._canvas.width / this._scaleWidth * this._dir_x;\n\t\tvar yy1 = (y1 - this.scaleTop) * this._canvas.height / this._scaleHeight * this._dir_y;\n\t\tvar xx2 = (x2 - this.scaleLeft) * this._canvas.width / this._scaleWidth * this._dir_x;\n\t\tvar yy2 = (y2 - this.scaleTop) * this._canvas.height / this._scaleHeight * this._dir_y;\n\n\t\tthis._context.fillRect( xx1, yy1, xx2-xx1, yy2-yy1 );\n\t}\n\n  /**\n   * 文字列を描画する\n   *\n   * @param { number } x 文字を描画するX座標\n   * @param { number } y 文字を描画するY座標\n   * @param { string } str 文字列\n   */\n  print( x, y, str ) {\n\t\tif( this._scalable ) {\n\t\t\tvar xx = (x - this._scaleLeft) * this._canvas.width / this._scaleWidth * this._dir_x;\n\t\t\tvar yy = (y - this._scaleTop) * this._canvas.height / this._scaleHeight * this._dir_y;\n\t\t} else {\n\t\t\tvar xx = x;\n\t\t\tvar yy = y;\n\t\t}\n\t\tthis._context.fillText( str, xx, yy );\n\t}\n}\n"
+  },
+  {
+    "__docId__": 55,
+    "kind": "class",
+    "static": true,
+    "variation": null,
+    "name": "VCanvas",
+    "memberof": "js/vcanvas.js",
+    "longname": "js/vcanvas.js~VCanvas",
+    "access": "public",
+    "export": false,
+    "importPath": "chord/js/vcanvas.js",
+    "importStyle": null,
+    "description": "",
+    "lineNumber": 5,
+    "interface": false
+  },
+  {
+    "__docId__": 56,
+    "kind": "constructor",
+    "static": false,
+    "variation": null,
+    "name": "constructor",
+    "memberof": "js/vcanvas.js~VCanvas",
+    "longname": "js/vcanvas.js~VCanvas#constructor",
+    "access": null,
+    "description": "",
+    "lineNumber": 10,
+    "params": [
+      {
+        "nullable": null,
+        "types": [
+          " HTMLCanvasElement "
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "canvasElement",
+        "description": "HTMLのCanvas要素"
+      }
+    ],
+    "generator": false
+  },
+  {
+    "__docId__": 57,
+    "kind": "member",
+    "static": false,
+    "variation": null,
+    "name": "_canvas",
+    "memberof": "js/vcanvas.js~VCanvas",
+    "longname": "js/vcanvas.js~VCanvas#_canvas",
+    "access": "private",
+    "description": null,
+    "lineNumber": 12,
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 58,
+    "kind": "member",
+    "static": false,
+    "variation": null,
+    "name": "_context",
+    "memberof": "js/vcanvas.js~VCanvas",
+    "longname": "js/vcanvas.js~VCanvas#_context",
+    "access": null,
+    "description": null,
+    "lineNumber": 13,
+    "undocument": true,
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 59,
+    "kind": "member",
+    "static": false,
+    "variation": null,
+    "name": "_scaleWidth",
+    "memberof": "js/vcanvas.js~VCanvas",
+    "longname": "js/vcanvas.js~VCanvas#_scaleWidth",
+    "access": null,
+    "description": null,
+    "lineNumber": 14,
+    "undocument": true,
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 60,
+    "kind": "member",
+    "static": false,
+    "variation": null,
+    "name": "_scaleHeight",
+    "memberof": "js/vcanvas.js~VCanvas",
+    "longname": "js/vcanvas.js~VCanvas#_scaleHeight",
+    "access": null,
+    "description": null,
+    "lineNumber": 15,
+    "undocument": true,
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 61,
+    "kind": "member",
+    "static": false,
+    "variation": null,
+    "name": "_scaleTop",
+    "memberof": "js/vcanvas.js~VCanvas",
+    "longname": "js/vcanvas.js~VCanvas#_scaleTop",
+    "access": null,
+    "description": null,
+    "lineNumber": 16,
+    "undocument": true,
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 62,
+    "kind": "member",
+    "static": false,
+    "variation": null,
+    "name": "_slaceLeft",
+    "memberof": "js/vcanvas.js~VCanvas",
+    "longname": "js/vcanvas.js~VCanvas#_slaceLeft",
+    "access": null,
+    "description": null,
+    "lineNumber": 17,
+    "undocument": true,
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 63,
+    "kind": "member",
+    "static": false,
+    "variation": null,
+    "name": "_scalable",
+    "memberof": "js/vcanvas.js~VCanvas",
+    "longname": "js/vcanvas.js~VCanvas#_scalable",
+    "access": null,
+    "description": null,
+    "lineNumber": 18,
+    "undocument": true,
+    "type": {
+      "types": [
+        "boolean"
+      ]
+    }
+  },
+  {
+    "__docId__": 64,
+    "kind": "method",
+    "static": false,
+    "variation": null,
+    "name": "scale",
+    "memberof": "js/vcanvas.js~VCanvas",
+    "longname": "js/vcanvas.js~VCanvas#scale",
+    "access": null,
+    "description": "仮想座標を設定する．",
+    "lineNumber": 32,
+    "params": [
+      {
+        "nullable": null,
+        "types": [
+          " number "
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "left",
+        "description": "左端の座標"
+      },
+      {
+        "nullable": null,
+        "types": [
+          " number "
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "top",
+        "description": "上端の座標"
+      },
+      {
+        "nullable": null,
+        "types": [
+          " number "
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "width",
+        "description": "仮想座標の幅"
+      },
+      {
+        "nullable": null,
+        "types": [
+          " number "
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "height",
+        "description": "仮想座標の高さ"
+      }
+    ],
+    "generator": false
+  },
+  {
+    "__docId__": 65,
+    "kind": "member",
+    "static": false,
+    "variation": null,
+    "name": "_scaleLeft",
+    "memberof": "js/vcanvas.js~VCanvas",
+    "longname": "js/vcanvas.js~VCanvas#_scaleLeft",
+    "access": null,
+    "description": null,
+    "lineNumber": 33,
+    "undocument": true,
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 66,
+    "kind": "member",
+    "static": false,
+    "variation": null,
+    "name": "_scaleTop",
+    "memberof": "js/vcanvas.js~VCanvas",
+    "longname": "js/vcanvas.js~VCanvas#_scaleTop",
+    "access": null,
+    "description": null,
+    "lineNumber": 34,
+    "undocument": true,
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 67,
+    "kind": "member",
+    "static": false,
+    "variation": null,
+    "name": "_scaleWidth",
+    "memberof": "js/vcanvas.js~VCanvas",
+    "longname": "js/vcanvas.js~VCanvas#_scaleWidth",
+    "access": null,
+    "description": null,
+    "lineNumber": 35,
+    "undocument": true,
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 68,
+    "kind": "member",
+    "static": false,
+    "variation": null,
+    "name": "_scaleHeight",
+    "memberof": "js/vcanvas.js~VCanvas",
+    "longname": "js/vcanvas.js~VCanvas#_scaleHeight",
+    "access": null,
+    "description": null,
+    "lineNumber": 36,
+    "undocument": true,
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 69,
+    "kind": "member",
+    "static": false,
+    "variation": null,
+    "name": "_scalable",
+    "memberof": "js/vcanvas.js~VCanvas",
+    "longname": "js/vcanvas.js~VCanvas#_scalable",
+    "access": null,
+    "description": null,
+    "lineNumber": 37,
+    "undocument": true,
+    "type": {
+      "types": [
+        "boolean"
+      ]
+    }
+  },
+  {
+    "__docId__": 70,
+    "kind": "member",
+    "static": false,
+    "variation": null,
+    "name": "_scaleWidth",
+    "memberof": "js/vcanvas.js~VCanvas",
+    "longname": "js/vcanvas.js~VCanvas#_scaleWidth",
+    "access": null,
+    "description": null,
+    "lineNumber": 40,
+    "undocument": true,
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 71,
+    "kind": "member",
+    "static": false,
+    "variation": null,
+    "name": "_dir_x",
+    "memberof": "js/vcanvas.js~VCanvas",
+    "longname": "js/vcanvas.js~VCanvas#_dir_x",
+    "access": null,
+    "description": null,
+    "lineNumber": 41,
+    "undocument": true,
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 72,
+    "kind": "member",
+    "static": false,
+    "variation": null,
+    "name": "_dir_x",
+    "memberof": "js/vcanvas.js~VCanvas",
+    "longname": "js/vcanvas.js~VCanvas#_dir_x",
+    "access": null,
+    "description": null,
+    "lineNumber": 42,
+    "undocument": true,
+    "type": {
+      "types": [
+        "number"
+      ]
+    }
+  },
+  {
+    "__docId__": 73,
+    "kind": "member",
+    "static": false,
+    "variation": null,
+    "name": "_scaleHeight",
+    "memberof": "js/vcanvas.js~VCanvas",
+    "longname": "js/vcanvas.js~VCanvas#_scaleHeight",
+    "access": null,
+    "description": null,
+    "lineNumber": 45,
+    "undocument": true,
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 74,
+    "kind": "member",
+    "static": false,
+    "variation": null,
+    "name": "_dir_y",
+    "memberof": "js/vcanvas.js~VCanvas",
+    "longname": "js/vcanvas.js~VCanvas#_dir_y",
+    "access": null,
+    "description": null,
+    "lineNumber": 46,
+    "undocument": true,
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 75,
+    "kind": "member",
+    "static": false,
+    "variation": null,
+    "name": "_dir_y",
+    "memberof": "js/vcanvas.js~VCanvas",
+    "longname": "js/vcanvas.js~VCanvas#_dir_y",
+    "access": null,
+    "description": null,
+    "lineNumber": 47,
+    "undocument": true,
+    "type": {
+      "types": [
+        "number"
+      ]
+    }
+  },
+  {
+    "__docId__": 76,
+    "kind": "method",
+    "static": false,
+    "variation": null,
+    "name": "forecolor",
+    "memberof": "js/vcanvas.js~VCanvas",
+    "longname": "js/vcanvas.js~VCanvas#forecolor",
+    "access": null,
+    "description": "描画する際の色を設定する．\nパラメータr,g,bはいずれも0〜255，aは0〜1．",
+    "lineNumber": 59,
+    "params": [
+      {
+        "nullable": null,
+        "types": [
+          " number "
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "r",
+        "description": "赤"
+      },
+      {
+        "nullable": null,
+        "types": [
+          " number "
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "g",
+        "description": "緑"
+      },
+      {
+        "nullable": null,
+        "types": [
+          " number "
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "b",
+        "description": "青"
+      },
+      {
+        "nullable": null,
+        "types": [
+          " number "
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "a",
+        "description": "透明度"
+      }
+    ],
+    "generator": false
+  },
+  {
+    "__docId__": 77,
+    "kind": "member",
+    "static": false,
+    "variation": null,
+    "name": "_color",
+    "memberof": "js/vcanvas.js~VCanvas",
+    "longname": "js/vcanvas.js~VCanvas#_color",
+    "access": null,
+    "description": null,
+    "lineNumber": 62,
+    "undocument": true,
+    "type": {
+      "types": [
+        "*"
+      ]
+    }
+  },
+  {
+    "__docId__": 78,
+    "kind": "method",
+    "static": false,
+    "variation": null,
+    "name": "lineWidth",
+    "memberof": "js/vcanvas.js~VCanvas",
+    "longname": "js/vcanvas.js~VCanvas#lineWidth",
+    "access": null,
+    "description": "線の太さを設定する．\n単位はピクセル．",
+    "lineNumber": 73,
+    "params": [
+      {
+        "nullable": null,
+        "types": [
+          " number "
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "width",
+        "description": "線の太さ"
+      }
+    ],
+    "generator": false
+  },
+  {
+    "__docId__": 79,
+    "kind": "method",
+    "static": false,
+    "variation": null,
+    "name": "drawWidth",
+    "memberof": "js/vcanvas.js~VCanvas",
+    "longname": "js/vcanvas.js~VCanvas#drawWidth",
+    "access": null,
+    "description": "線の太さを設定する．\nlineWidthと同じ働き．",
+    "lineNumber": 83,
+    "params": [
+      {
+        "nullable": null,
+        "types": [
+          " number"
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "width",
+        "description": "線の太さ"
+      }
+    ],
+    "generator": false
+  },
+  {
+    "__docId__": 80,
+    "kind": "method",
+    "static": false,
+    "variation": null,
+    "name": "setFont",
+    "memberof": "js/vcanvas.js~VCanvas",
+    "longname": "js/vcanvas.js~VCanvas#setFont",
+    "access": null,
+    "description": "フォントを設定する．",
+    "lineNumber": 92,
+    "params": [
+      {
+        "nullable": null,
+        "types": [
+          " string "
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "font",
+        "description": "フォント情報"
+      }
+    ],
+    "generator": false
+  },
+  {
+    "__docId__": 81,
+    "kind": "method",
+    "static": false,
+    "variation": null,
+    "name": "line",
+    "memberof": "js/vcanvas.js~VCanvas",
+    "longname": "js/vcanvas.js~VCanvas#line",
+    "access": null,
+    "description": "線を描画する",
+    "lineNumber": 104,
+    "params": [
+      {
+        "nullable": null,
+        "types": [
+          " number "
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "x1",
+        "description": "始点のX座標"
+      },
+      {
+        "nullable": null,
+        "types": [
+          " number "
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "y1",
+        "description": "始点のY座標"
+      },
+      {
+        "nullable": null,
+        "types": [
+          " number "
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "x2",
+        "description": "終点のX座標"
+      },
+      {
+        "nullable": null,
+        "types": [
+          " number "
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "y2",
+        "description": "終点のX座標"
+      }
+    ],
+    "generator": false
+  },
+  {
+    "__docId__": 82,
+    "kind": "method",
+    "static": false,
+    "variation": null,
+    "name": "lineStart",
+    "memberof": "js/vcanvas.js~VCanvas",
+    "longname": "js/vcanvas.js~VCanvas#lineStart",
+    "access": null,
+    "description": "連続的に線を描画する際の始点を設定する",
+    "lineNumber": 126,
+    "params": [
+      {
+        "nullable": null,
+        "types": [
+          " number "
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "x",
+        "description": "始点のX座標"
+      },
+      {
+        "nullable": null,
+        "types": [
+          " number "
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "y",
+        "description": "始点のY座標"
+      }
+    ],
+    "generator": false
+  },
+  {
+    "__docId__": 83,
+    "kind": "method",
+    "static": false,
+    "variation": null,
+    "name": "lineto",
+    "memberof": "js/vcanvas.js~VCanvas",
+    "longname": "js/vcanvas.js~VCanvas#lineto",
+    "access": null,
+    "description": "連続的に線を描画する．正確には直前に描画された座標から線を引く",
+    "lineNumber": 143,
+    "params": [
+      {
+        "nullable": null,
+        "types": [
+          " number "
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "x",
+        "description": "終点のX座標"
+      },
+      {
+        "nullable": null,
+        "types": [
+          " number "
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "y",
+        "description": "終点のY座標"
+      }
+    ],
+    "generator": false
+  },
+  {
+    "__docId__": 84,
+    "kind": "method",
+    "static": false,
+    "variation": null,
+    "name": "beginPath",
+    "memberof": "js/vcanvas.js~VCanvas",
+    "longname": "js/vcanvas.js~VCanvas#beginPath",
+    "access": null,
+    "description": "描画開始時の宣言．最初にbeginPathを呼び，最後にstrokeかfillを呼ぶ",
+    "lineNumber": 157,
+    "params": [],
+    "generator": false
+  },
+  {
+    "__docId__": 85,
+    "kind": "method",
+    "static": false,
+    "variation": null,
+    "name": "stroke",
+    "memberof": "js/vcanvas.js~VCanvas",
+    "longname": "js/vcanvas.js~VCanvas#stroke",
+    "access": null,
+    "description": "線描画",
+    "lineNumber": 164,
+    "params": [],
+    "generator": false
+  },
+  {
+    "__docId__": 86,
+    "kind": "method",
+    "static": false,
+    "variation": null,
+    "name": "fill",
+    "memberof": "js/vcanvas.js~VCanvas",
+    "longname": "js/vcanvas.js~VCanvas#fill",
+    "access": null,
+    "description": "塗りつぶし描画",
+    "lineNumber": 171,
+    "params": [],
+    "generator": false
+  },
+  {
+    "__docId__": 87,
+    "kind": "method",
+    "static": false,
+    "variation": null,
+    "name": "cls",
+    "memberof": "js/vcanvas.js~VCanvas",
+    "longname": "js/vcanvas.js~VCanvas#cls",
+    "access": null,
+    "description": "描画領域のクリア",
+    "lineNumber": 178,
+    "params": [],
+    "generator": false
+  },
+  {
+    "__docId__": 88,
+    "kind": "method",
+    "static": false,
+    "variation": null,
+    "name": "pset",
+    "memberof": "js/vcanvas.js~VCanvas",
+    "longname": "js/vcanvas.js~VCanvas#pset",
+    "access": null,
+    "description": "点を描画する",
+    "lineNumber": 190,
+    "params": [
+      {
+        "nullable": null,
+        "types": [
+          " number "
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "x",
+        "description": "点のX座標"
+      },
+      {
+        "nullable": null,
+        "types": [
+          " number "
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "y",
+        "description": "点のY座標"
+      }
+    ],
+    "generator": false
+  },
+  {
+    "__docId__": 89,
+    "kind": "method",
+    "static": false,
+    "variation": null,
+    "name": "circle",
+    "memberof": "js/vcanvas.js~VCanvas",
+    "longname": "js/vcanvas.js~VCanvas#circle",
+    "access": null,
+    "description": "円を描画する",
+    "lineNumber": 209,
+    "params": [
+      {
+        "nullable": null,
+        "types": [
+          " number "
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "x",
+        "description": "円の中心のX座標"
+      },
+      {
+        "nullable": null,
+        "types": [
+          " number "
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "y",
+        "description": "円の中心のY座標"
+      },
+      {
+        "nullable": null,
+        "types": [
+          " number "
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "radius",
+        "description": "円の半径"
+      }
+    ],
+    "generator": false
+  },
+  {
+    "__docId__": 90,
+    "kind": "method",
+    "static": false,
+    "variation": null,
+    "name": "rect",
+    "memberof": "js/vcanvas.js~VCanvas",
+    "longname": "js/vcanvas.js~VCanvas#rect",
+    "access": null,
+    "description": "長方形を描画する",
+    "lineNumber": 224,
+    "params": [
+      {
+        "nullable": null,
+        "types": [
+          " number "
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "x1",
+        "description": "長方形の1つの頂点のX座標"
+      },
+      {
+        "nullable": null,
+        "types": [
+          " number "
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "y1",
+        "description": "同じ頂点のY座標"
+      },
+      {
+        "nullable": null,
+        "types": [
+          " number "
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "x2",
+        "description": "上記の頂点の対角の頂点のX座標"
+      },
+      {
+        "nullable": null,
+        "types": [
+          " number "
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "y2",
+        "description": "同じ頂点のY座標"
+      }
+    ],
+    "generator": false
+  },
+  {
+    "__docId__": 91,
+    "kind": "method",
+    "static": false,
+    "variation": null,
+    "name": "print",
+    "memberof": "js/vcanvas.js~VCanvas",
+    "longname": "js/vcanvas.js~VCanvas#print",
+    "access": null,
+    "description": "文字列を描画する",
+    "lineNumber": 241,
+    "params": [
+      {
+        "nullable": null,
+        "types": [
+          " number "
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "x",
+        "description": "文字を描画するX座標"
+      },
+      {
+        "nullable": null,
+        "types": [
+          " number "
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "y",
+        "description": "文字を描画するY座標"
+      },
+      {
+        "nullable": null,
+        "types": [
+          " string "
+        ],
+        "spread": false,
+        "optional": false,
+        "name": "str",
+        "description": "文字列"
+      }
+    ],
+    "generator": false
+  },
+  {
+    "__docId__": 93,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "Infinity",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Infinity",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Infinity",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 94,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "NaN",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/NaN",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~NaN",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 95,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "undefined",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/undefined",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~undefined",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 96,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "null",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/null",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~null",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 97,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "Object",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Object",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 98,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "object",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~object",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 99,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "Function",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Function",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 100,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "function",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Function",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~function",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 101,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "Boolean",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Boolean",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Boolean",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 102,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "boolean",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Boolean",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~boolean",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 103,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "Symbol",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Symbol",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 104,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "Error",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Error",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 105,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "EvalError",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/EvalError",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~EvalError",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 106,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "InternalError",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/InternalError",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~InternalError",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 107,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "RangeError",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RangeError",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~RangeError",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 108,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "ReferenceError",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/ReferenceError",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~ReferenceError",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 109,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "SyntaxError",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/SyntaxError",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~SyntaxError",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 110,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "TypeError",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/TypeError",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~TypeError",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 111,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "URIError",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/URIError",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~URIError",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 112,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "Number",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Number",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 113,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "number",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Number",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~number",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 114,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "Date",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Date",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 115,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "String",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~String",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 116,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "string",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/String",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~string",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 117,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "RegExp",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/RegExp",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~RegExp",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 118,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "Array",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Array",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 119,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "Int8Array",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Int8Array",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Int8Array",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 120,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "Uint8Array",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Uint8Array",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Uint8Array",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 121,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "Uint8ClampedArray",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Uint8ClampedArray",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Uint8ClampedArray",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 122,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "Int16Array",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Int16Array",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Int16Array",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 123,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "Uint16Array",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Uint16Array",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Uint16Array",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 124,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "Int32Array",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Int32Array",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Int32Array",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 125,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "Uint32Array",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Uint32Array",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Uint32Array",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 126,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "Float32Array",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Float32Array",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Float32Array",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 127,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "Float64Array",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Float64Array",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Float64Array",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 128,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "Map",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Map",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 129,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "Set",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Set",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Set",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 130,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "WeakMap",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/WeakMap",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~WeakMap",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 131,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "WeakSet",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/WeakSet",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~WeakSet",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 132,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "ArrayBuffer",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~ArrayBuffer",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 133,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "DataView",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/DataView",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~DataView",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 134,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "JSON",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~JSON",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 135,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "Promise",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Promise",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 136,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "Generator",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Generator",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Generator",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 137,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "GeneratorFunction",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/GeneratorFunction",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~GeneratorFunction",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 138,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "Reflect",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Reflect",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Reflect",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 139,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "Proxy",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Proxy",
+    "memberof": "BuiltinExternal/ECMAScriptExternal.js",
+    "longname": "BuiltinExternal/ECMAScriptExternal.js~Proxy",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 141,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "CanvasRenderingContext2D",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D",
+    "memberof": "BuiltinExternal/WebAPIExternal.js",
+    "longname": "BuiltinExternal/WebAPIExternal.js~CanvasRenderingContext2D",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 142,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "DocumentFragment",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/API/DocumentFragment",
+    "memberof": "BuiltinExternal/WebAPIExternal.js",
+    "longname": "BuiltinExternal/WebAPIExternal.js~DocumentFragment",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 143,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "Element",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/API/Element",
+    "memberof": "BuiltinExternal/WebAPIExternal.js",
+    "longname": "BuiltinExternal/WebAPIExternal.js~Element",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 144,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "Event",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/API/Event",
+    "memberof": "BuiltinExternal/WebAPIExternal.js",
+    "longname": "BuiltinExternal/WebAPIExternal.js~Event",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 145,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "Node",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/API/Node",
+    "memberof": "BuiltinExternal/WebAPIExternal.js",
+    "longname": "BuiltinExternal/WebAPIExternal.js~Node",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 146,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "NodeList",
+    "externalLink": "https://developer.mozilla.org/en-US/docs/Web/API/NodeList",
+    "memberof": "BuiltinExternal/WebAPIExternal.js",
+    "longname": "BuiltinExternal/WebAPIExternal.js~NodeList",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 147,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "XMLHttpRequest",
+    "externalLink": "https://developer.mozilla.org/en/docs/Web/API/XMLHttpRequest",
+    "memberof": "BuiltinExternal/WebAPIExternal.js",
+    "longname": "BuiltinExternal/WebAPIExternal.js~XMLHttpRequest",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  },
+  {
+    "__docId__": 148,
+    "kind": "external",
+    "static": true,
+    "variation": null,
+    "name": "AudioContext",
+    "externalLink": "https://developer.mozilla.org/en/docs/Web/API/AudioContext",
+    "memberof": "BuiltinExternal/WebAPIExternal.js",
+    "longname": "BuiltinExternal/WebAPIExternal.js~AudioContext",
+    "access": null,
+    "description": "",
+    "builtinExternal": true
+  }
+]
