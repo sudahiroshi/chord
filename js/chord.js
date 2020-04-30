@@ -7,6 +7,7 @@ class SoundGenerator {
    * コンストラクタでAudioContextを初期化する
    */
   constructor() {
+    window.AudioContext = window.AudioContext||window.webkitAudioContext;
     this.context = new AudioContext();
     this.osc = null;
     this._playing = false;
